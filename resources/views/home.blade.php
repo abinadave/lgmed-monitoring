@@ -81,7 +81,7 @@
             </div>
         </nav>
 
-        <router-view></router-view>
+        <router-view :user="{{ Auth::user() }}"></router-view>
     </div>
 
     <!-- Scripts -->

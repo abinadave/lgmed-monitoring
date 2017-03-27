@@ -31,6 +31,11 @@ window.router = new VueRouter({
       name: 'users',
       component: require('./components/users/users.vue')
     },
+    {
+      path: '/LGMED/programs/:id',
+      name: 'program-reports',
+      component: require('./components/programs/program_view.vue')
+    },
     { path: '/', redirect: '/LGMED/programs' }
   ]
 });

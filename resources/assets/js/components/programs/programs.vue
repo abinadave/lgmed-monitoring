@@ -9,32 +9,66 @@
                     </div>
 
                     <div class="panel-body">
-                        <button @click="createProgram" class="btn btn-info pull-right">Add &nbsp;&nbsp;<i class="fa fa-tasks" aria-hidden="true"></i></button>
+                        <button @click="createProgram" class="btn btn-sm btn-primary pull-right">
+                            
+                            <span v-if="user.usertype === 'program-manager'">
+                                Build program
+                            </span>
+                            <span v-else="user.usertype === 'program-manager'">
+                                Add program
+                            </span>
+                        <i class="fa fa-tasks" aria-hidden="true"></i></button>
+                        <list-of-programs :user="user" :programs="programs" :users="users"></list-of-programs>
                     </div>
                 </div>
             </div>
         </div>
-        <modal-create-program :users="users"></modal-create-program>
+        <modal-create-program :user="user" @newprogram="newChildProgram" :users="users"></modal-create-program>
     </div>
 </template>
 
 <script>
     import CompCreateProgram from './create_program.vue'
+    import CompProgramList from './program_list.vue'
     export default {
         mounted() {
-            console.log('Component mounted.');
-            this.fetchProgramManagers();
+            let self = this;
+            console.log('Component program.vue mounted.');
+            self.fetchProgramManagers();
+            self.fetchPrograms();
+        },
+        props: {
+            user: {
+                type: Object
+            }
         },
         data(){
             return {
-                users: [],
+                users: [], programs: [],
                 imgUrl: '/img/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png'
             }
         },
         methods: {
+            newChildProgram(respProgram){
+                let self = this;
+                self.programs.unshift(respProgram);
+            },
             createProgram(){
                 let self = this;
                 $('#modal-create-program').modal('show');
+            },
+            fetchPrograms(){
+                let self = this;
+                self.$http.get('/program/management').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.programs = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
             },
             fetchProgramManagers(){
                 let self = this;
@@ -51,7 +85,13 @@
             }
         },
         components: {
-            'modal-create-program': CompCreateProgram
+            'modal-create-program': CompCreateProgram,
+            'list-of-programs': CompProgramList
+        },
+        watch: {
+            'user': function(newVal){
+                console.log(newVal)
+            }
         }
     }
 </script>

@@ -11,9 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return view('home');
-});
+Route::get('/', 'HomeController@index');
 
 Auth::routes();
 
@@ -23,4 +21,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('user', 'UserController@insert');
     Route::get('user/management', 'UserController@fetch');
     Route::post('program', 'ProgramController@insert');
+    Route::get('program/management', 'ProgramController@fetch');
+    Route::get('program/stats/{id}', 'ProgramStatsController@programView');
 });

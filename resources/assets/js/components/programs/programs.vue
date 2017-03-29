@@ -7,16 +7,9 @@
                         <img style="width: 50px; height: 50px" :src="imgUrl">
                         <h2 style="display: inline; padding: 15px">LGMED Monitoring Dashboard</h2>
                     </div>
-
                     <div class="panel-body">
                         <button @click="createProgram" class="btn btn-sm btn-primary pull-right">
-                            
-                            <span v-if="user.usertype === 'program-manager'">
-                                Build program
-                            </span>
-                            <span v-else="user.usertype === 'program-manager'">
-                                Add program
-                            </span>
+                            Add program
                         <i class="fa fa-tasks" aria-hidden="true"></i></button>
                         <list-of-programs :user="user" :programs="programs" :users="users"></list-of-programs>
                     </div>

@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
+            <div class="col-md-12 ">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <b title="PROGRAM TITLE">{{ program.program_name.toUpperCase() }}</b>
@@ -13,19 +13,24 @@
                         No Report was found for : 
                     </div>
                     <div v-else="noReportWasFound">
-                        <report-list :program="program" :program-stats="program_stats"></report-list>
+                        <report-list @setcurrentreport="setCurrentReport" :program="program" :program-stats="program_stats"></report-list>
                     </div>
                     </div>
                 </div>
             </div>
         </div>
         <modal-create-report :program="program"></modal-create-report>
+        <modal-submit-report 
+        :program="program"
+        :program-stat="currentStat"
+        ></modal-submit-report>
     </div>
 </template>
 
 <script>
     import CompCreateReport from './report/create_report_program.vue'
     import CompReportList   from './report/report_list.vue'
+    import CompModalSubmit  from './report/modal_submit_report_now.vue'
     export default {
         mounted() {
             this.fetch();
@@ -38,7 +43,8 @@
                     program_name: '',
                     program_manager: ''
                 },
-                noReportWasFound: false
+                noReportWasFound: false,
+                currentStat: {}
             }
         },
         props: {
@@ -47,6 +53,10 @@
             }
         },
         methods: {
+            setCurrentReport(stat){
+                let self = this;
+                self.currentStat = stat;
+            },
             createReport(){
                 let self = this;
                 $('#create-report-program').modal('show');
@@ -97,6 +107,7 @@
         },
         components: {
             'modal-create-report': CompCreateReport,
+            'modal-submit-report': CompModalSubmit,
             'report-list': CompReportList
         }
     }

@@ -5,7 +5,9 @@
                <tr>
                    <th>Reporting Freq.</th>
                    <th>Status</th>
-                   <th>Submission Date</th>
+                   <th>Submission Date/Deadline</th>
+                   <th>Date Submitted</th>
+                   <th></th>
                </tr>
            </thead>
            <tbody>
@@ -20,6 +22,12 @@
                        </span>
                    </td>
                    <td>{{ stat.submission_date }}</td>
+                   <td>-</td>
+                   <td>
+                     <span v-if="stat.status != 1">
+                        <a style="cursor: pointer" @click="confirmSubmission(stat)">mark as submitted</a>
+                     </span>
+                   </td>
                </tr>
            </tbody>
        </table>
@@ -34,6 +42,17 @@
         props: {
             programStats: {
                 type: Array
+            }
+        },
+        methods: {
+            confirmSubmission(stat){
+                let self = this;
+                self.$emit('setcurrentreport', stat);
+                $('#modal-submit-report').modal('show');
+            },
+            submitNow(stat){
+                let self = this;
+                
             }
         }
     }

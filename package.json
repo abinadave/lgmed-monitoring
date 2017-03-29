@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "alertify.js": "^1.0.12",
+    "jquery-ui": "^1.12.1",
     "toastr": "^2.1.2"
   }
 }
-

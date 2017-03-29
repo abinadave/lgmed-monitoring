@@ -23,4 +23,5 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('program', 'ProgramController@insert');
     Route::get('program/management', 'ProgramController@fetch');
     Route::get('program/stats/{id}', 'ProgramStatsController@programView');
+    Route::post('program/stats', 'ProgramStatsController@insert');
 });

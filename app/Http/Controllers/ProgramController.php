@@ -10,7 +10,7 @@ class ProgramController extends Controller
 {
     public function insert(Request $request){
     	$this->validate($request, [
-	        'program_name' => 'required|unique:programs|max:100|min:3',
+	        'program_name' => 'required|max:100|min:3',
 	        'program_manager' => 'numeric|min:1',
 	    ]);
 	    return $this->saveProgram($request);

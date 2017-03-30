@@ -22,4 +22,8 @@ class ProgramStatsController extends Controller
     	$stat->save();
     	return response()->json($stat);
     }
+    public function fetchAll(){
+        $stats = ProgramStat::all();
+        return response()->json($stats);
+    }
 }

@@ -9,21 +9,38 @@
                         <button @click="createReport" class="btn btn-xs btn-default pull-right" style="margin-right: 10px">add report to {{ program.program_name}}</button>
                     </div>
                     <div class="panel-body">
-                    <div v-if="noReportWasFound" class="alert alert-info" role="alert">
-                        No Report was found for : 
+                    <div v-if="noReportWasFound">
+                        No Report was found for
                     </div>
                     <div v-else="noReportWasFound">
-                        <report-list @setcurrentreport="setCurrentReport" :program="program" :program-stats="program_stats"></report-list>
+                        <report-list 
+                        @setcurrentreport="setCurrentReport" 
+                        :program="program" 
+                        :program-stats="program_stats"
+                        :submitted-dates="submitted_dates"
+                        ></report-list>
                     </div>
                     </div>
                 </div>
             </div>
         </div>
-        <modal-create-report :program="program"></modal-create-report>
+        <modal-create-report 
+        @newreportcreated="createReportChild"
+        :program="program">
+        </modal-create-report>
+
         <modal-submit-report 
+        @addsubmitteddates="addSubmittedDateChild"
         :program="program"
         :program-stat="currentStat"
         ></modal-submit-report>
+
+        <modal-report-files 
+        :program-stats="program_stats"
+        :programs="programs"
+        :current-stat="currentStat"
+        :users="users"
+        ></modal-report-files>
     </div>
 </template>
 
@@ -31,20 +48,25 @@
     import CompCreateReport from './report/create_report_program.vue'
     import CompReportList   from './report/report_list.vue'
     import CompModalSubmit  from './report/modal_submit_report_now.vue'
+    import CompReportFiles  from './report/modal_report_files.vue'
     export default {
         mounted() {
             this.fetch();
             this.fetchUsers();
+            this.fetchSubmittedDates();
+            this.fetchPrograms();
         },
         data(){
             return {
                 users: [], program_stats: [],
+                programs: [],
                 program: {
                     program_name: '',
                     program_manager: ''
                 },
                 noReportWasFound: false,
-                currentStat: {}
+                currentStat: {},
+                submitted_dates: []
             }
         },
         props: {
@@ -53,6 +75,38 @@
             }
         },
         methods: {
+            fetchPrograms(){
+                let self = this;
+                self.$http.get('/program/management').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.programs = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
+            createReportChild(respReport){
+                this.program_stats.unshift(respReport);
+            },
+            addSubmittedDateChild(respSubmittedDate){
+                this.submitted_dates.push(respSubmittedDate);
+            },
+            fetchSubmittedDates(){
+                let self = this;
+                self.$http.get('/submitted/date').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.submitted_dates = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             setCurrentReport(stat){
                 let self = this;
                 self.currentStat = stat;
@@ -108,6 +162,7 @@
         components: {
             'modal-create-report': CompCreateReport,
             'modal-submit-report': CompModalSubmit,
+            'modal-report-files': CompReportFiles,
             'report-list': CompReportList
         }
     }

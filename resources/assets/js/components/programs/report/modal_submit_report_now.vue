@@ -29,6 +29,7 @@
     import 'jquery-ui/ui/widgets/datepicker';
     import 'jquery-ui/themes/base/datepicker.css';
     import moment from 'moment'
+    import alertify from 'alertify.js'
     export default {
         mounted() {
             this.initDatePicker();
@@ -56,7 +57,11 @@
                 self.$http.post('/submitted/date', form).then((resp) => {
                     if (resp.status === 200) {
                         let json = resp.body;
-                        console.log(json)
+                        if (json.id > 0) {
+                          self.whenSubmitting = false;
+                          $('#modal-submit-report').modal('hide');
+                          self.$emit('addsubmitteddates', json);
+                        }
                     }
                 }, (resp) => {
                     if (resp.status === 422) {

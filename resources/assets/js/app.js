@@ -19,6 +19,14 @@ Vue.use(VueResource);
 
 Vue.http.headers.common['X-CSRF-TOKEN'] = document.querySelector('#csrf-token').getAttribute('content');
 
+$.ajaxSetup(
+{
+    headers:
+    {
+        'X-CSRF-Token': $('#csrf-token').val()
+    }
+});
+
 window.router = new VueRouter({
   routes: [
     {

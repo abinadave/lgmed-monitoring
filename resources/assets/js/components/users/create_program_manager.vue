@@ -2,7 +2,7 @@
     <div>
         <form @submit.prevent="saveUser" style="padding: 20px">
             <div v-bind:class="{ 'form-group col-md-5': true, 'has-error': error.name }">
-              <label class="control-label">Name</label>
+              <label class="control-label">Fullname</label>
               <input v-model="form.name" type="text" class="form-control" >
             </div>
             <div v-bind:class="{ 'form-group col-md-5': true, 'has-error': error.email }">
@@ -20,8 +20,8 @@
             <div v-bind:class="{ 'form-group col-md-5': true, 'has-error': error.usertype }">
               <label class="control-label">Usertype (Designation)</label>
               <select v-model="form.usertype" class="form-control">
-                  <option>program-manager</option>
-                  <option>admin</option>
+                  <option value="program-manager" :selected="true">Program Manager</option>
+                  <option value="admin">admin</option>
               </select>
             </div>
             <div class="col-md-8">

@@ -1,7 +1,6 @@
 <template>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
+    <div>
+            <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <img style="width: 50px; height: 50px" :src="imgUrl">
@@ -11,11 +10,14 @@
                         <button @click="createProgram" class="btn btn-sm btn-primary pull-right">
                             Add program
                         <i class="fa fa-tasks" aria-hidden="true"></i></button>
-                        <list-of-programs :user="user" :programs="programs" :users="users"></list-of-programs>
+                        <list-of-programs
+                         :program-stats="program_stats"
+                         :user="user" 
+                         :programs="programs" 
+                         :users="users"></list-of-programs>
                     </div>
                 </div>
             </div>
-        </div>
         <modal-create-program :user="user" @newprogram="newChildProgram" :users="users"></modal-create-program>
     </div>
 </template>
@@ -29,6 +31,7 @@
             console.log('Component program.vue mounted.');
             self.fetchProgramManagers();
             self.fetchPrograms();
+            self.fetchProgramStats();
         },
         props: {
             user: {
@@ -38,10 +41,24 @@
         data(){
             return {
                 users: [], programs: [],
+                program_stats: [],
                 imgUrl: '/img/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png'
             }
         },
         methods: {
+            fetchProgramStats(){
+                let self = this;
+                self.$http.get('/program/stats').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.program_stats = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             newChildProgram(respProgram){
                 let self = this;
                 self.programs.unshift(respProgram);

@@ -23,6 +23,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('program', 'ProgramController@insert');
     Route::get('program/management', 'ProgramController@fetch');
     Route::get('program/stats/{id}', 'ProgramStatsController@programView');
+    Route::get('program/stats', 'ProgramStatsController@fetchAll');
     Route::post('program/stats', 'ProgramStatsController@insert');
     Route::post('submitted/date', 'SubmittedDateController@insert');
+    Route::get('submitted/date', 'SubmittedDateController@fetch');
+    Route::get('report/files/{id}', 'ReportFileController@fetchByStatId');
+    Route::post('upload/report/file', 'ReportFileController@upload');
+    Route::post('download/report/file', 'ReportFileController@downloadFile');
 });

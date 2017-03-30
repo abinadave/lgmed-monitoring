@@ -18,7 +18,12 @@
                           <option>Monthly</option>
                           <option>Weekly</option>
                           <option>Quarterly</option>
+                          <option value="others">Others</option>
                       </select>
+                    </div>
+                    <div class="form-group" v-show="form.reporting_freq === 'others'">
+                      <label class="control-label">Enter Report type</label>
+                      <input class="form-control input-form" v-model="form.others" type="text" >
                     </div>
                     <div class="form-group">
                       <label class="control-label">Status</label>
@@ -64,7 +69,8 @@
                     submission_date: '',
                     reporting_freq: '',
                     status: 0,
-                    program_id: 0
+                    program_id: 0,
+                    others: ''
                 }
             }
         },
@@ -85,6 +91,7 @@
                             self.clearErrors();
                             alertify.success('report successfully created.');
                             $('#create-report-program').modal('hide');
+                            self.$emit('newreportcreated', json);
                         }
                     }
                 }, (resp) => {

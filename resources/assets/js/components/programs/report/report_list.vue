@@ -5,29 +5,32 @@
                <tr>
                    <th>Reporting Freq.</th>
                    <th>Status</th>
-                   <th>Submission Date/Deadline</th>
-                   <th>Date Submitted</th>
-                   <th></th>
+                   <th>Deadline</th>
+                   <th>Date submitted</th>
+                   <td>files</td>
                </tr>
            </thead>
            <tbody>
                <tr v-for="stat in programStats">
                    <td>{{ stat.reporting_freq }}</td>
                    <td>
-                       <span v-if="stat.status === 1">
-                           <i class="text-success">Submitted</i>
+                       <span v-if="checkIfSubmitted(stat) === 1">
+                           <b class="text-primary">Submitted</b>
                        </span>
                        <span class="text-danger" v-else>
                            <b>no report yet</b>
                        </span>
                    </td>
-                   <td>{{ stat.submission_date }}</td>
-                   <td>-</td>
+                   <td>{{ formatDate(stat.submission_date) }} &nbsp;&nbsp;( {{ fromNOw(stat.submission_date) }} )</td>
                    <td>
-                     <span v-if="stat.status != 1">
-                        <a style="cursor: pointer" @click="confirmSubmission(stat)">mark as submitted</a>
-                     </span>
+                      <span v-if="checkIfSubmitted(stat) === 1">
+                          {{ getSubmittedDate(stat) }} 
+                      </span>
+                      <span v-else>
+                          <a style="cursor: pointer" @click="confirmSubmission(stat)">mark as submitted</a>
+                      </span>
                    </td>
+                   <td><i style="cursor: pointer" @click="uploadReportFiles(stat)" class="fa fa-2x fa-folder" aria-hidden="true"></i></td>
                </tr>
            </tbody>
        </table>
@@ -35,16 +38,45 @@
 </template>
 
 <script>
+    import moment from 'moment'
     export default {
         mounted() {
-           
+            
         },
         props: {
             programStats: {
                 type: Array
+            },
+            submittedDates: {
+                type: Array
             }
         },
         methods: {
+            uploadReportFiles(stat){
+                let self = this;
+                self.$emit('setcurrentreport', stat);
+                $('#modal-report-files').modal('show');
+            },
+            checkIfSubmitted(stat){
+                let self = this;
+                return _.filter(self.submittedDates, {program_stat_id: stat.id}).length;
+            },
+            formatDate(date){
+                return moment(date).format('MMMM DD, YYYY');
+            },
+            fromNOw(date){
+                let self = this;
+                return moment(date).fromNow();
+            },
+            getSubmittedDate(stat){
+                let self = this;
+                let rs = _.filter(self.submittedDates, {program_stat_id: stat.id});
+                if (rs.length) {
+                    return self.formatDate(rs[0].date_submitted);
+                }else {
+                    return '-';
+                }
+            },
             confirmSubmission(stat){
                 let self = this;
                 self.$emit('setcurrentreport', stat);

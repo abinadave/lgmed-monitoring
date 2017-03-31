@@ -17,7 +17,8 @@
                      <td>{{ report.source }}</td>
                      <td>{{ getUser(report.uploaded_by) }}</td>
                      <td>{{ formatDate(report.created_at) }}</td>
-                     <th><i class="fa fa-download fa-2x" aria-hidden="true" style="cursor: pointer" @click="downloadFile(report)"></i></th>
+                   
+                     <th><i @click="viewFile(report)" style="cursor: pointer" class="fa fa-2x fa-eye text-primary" aria-hidden="true"></i></th>
                  </tr>
              </tbody>
         </table>
@@ -39,6 +40,10 @@
             console.log('Component mounted.');
         },
         methods: {
+            viewFile(report){
+                let self = this;
+                self.$emit('viewfile', report);
+            },
             downloadFile(report){
                 let self = this;
                 self.$emit('downloadfile', report);
@@ -60,7 +65,9 @@
             getUser(uploadedBy){
                 let self = this;
                 let rs = _.filter(self.users, {id: uploadedBy});
-                return rs[0].name;
+                if (rs.length) {
+                    return rs[0].name;
+                }
             },
             formatDate(date){
                 return moment(date).format('MMMM DD, YYYY, dddd');

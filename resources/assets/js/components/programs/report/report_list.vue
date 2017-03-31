@@ -7,7 +7,8 @@
                    <th>Status</th>
                    <th>Deadline</th>
                    <th>Date submitted</th>
-                   <td>files</td>
+                   <th>files</th>
+                   <th width="1"></th>
                </tr>
            </thead>
            <tbody>
@@ -31,6 +32,11 @@
                       </span>
                    </td>
                    <td><i style="cursor: pointer" @click="uploadReportFiles(stat)" class="fa fa-2x fa-folder" aria-hidden="true"></i></td>
+                   <td>
+                       <span v-if="checkIfSubmitted(stat) !== 1">
+                           <i @click="deleteProgram(stat)" style="cursor: pointer" class="fa fa-remove"></i>
+                       </span>
+                   </td>
                </tr>
            </tbody>
        </table>
@@ -39,6 +45,7 @@
 
 <script>
     import moment from 'moment'
+    import alertify from 'alertify.js'
     export default {
         mounted() {
             
@@ -52,6 +59,22 @@
             }
         },
         methods: {
+            deleteProgram(stat){
+                let self = this;
+                alertify.confirm("Are you sure ?", function () {
+                    let resource = self.$resource('program/stat{/id}');
+                    resource.delete({
+                      id: stat.id
+                    }).then((resp) => {
+                        console.log(resp);
+                    }, (resp) => {
+                        console.log(resp);
+                    });
+                }, function() {
+                    // user clicked "cancel"
+                });
+                
+            },
             uploadReportFiles(stat){
                 let self = this;
                 self.$emit('setcurrentreport', stat);

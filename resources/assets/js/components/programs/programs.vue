@@ -11,9 +11,11 @@
                             Add program
                         <i class="fa fa-tasks" aria-hidden="true"></i></button>
                         <list-of-programs
+                         @sortresponse="reSortPrograms"
                          :program-stats="program_stats"
                          :user="user" 
                          :programs="programs" 
+                         :submitted-dates="submitted_dates"
                          :users="users"></list-of-programs>
                     </div>
                 </div>
@@ -32,6 +34,7 @@
             self.fetchProgramManagers();
             self.fetchPrograms();
             self.fetchProgramStats();
+            self.fetchSubmittedDates();
         },
         props: {
             user: {
@@ -42,10 +45,28 @@
             return {
                 users: [], programs: [],
                 program_stats: [],
+                submitted_dates: [],
                 imgUrl: '/img/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png'
             }
         },
         methods: {
+            reSortPrograms(respPrograms){
+                let self = this;
+                self.programs = respPrograms;
+            },
+            fetchSubmittedDates(){
+                let self = this;
+                self.$http.get('/submitted/date').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.submitted_dates = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             fetchProgramStats(){
                 let self = this;
                 self.$http.get('/program/stats').then((resp) => {

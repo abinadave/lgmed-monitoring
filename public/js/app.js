@@ -30499,6 +30499,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     mounted: function mounted() {},
@@ -30515,21 +30519,80 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         programStats: {
             type: Array
+        },
+        submittedDates: {
+            type: Array
         }
     },
     data: function data() {
         return {
-            search: ''
+            search: '',
+            clickSort: 0
         };
     },
 
     methods: {
+        sortBy: function sortBy(attr) {
+            var self = this;
+            ++self.clickSort;
+            var type = self.clickSort % 2 === 0 ? 'asc' : 'desc';
+            var resource = self.$resource('programs/sortby{/attribute}{/type}');
+            resource.get({
+                attribute: attr,
+                type: type
+            }).then(function (resp) {
+                var json = resp.body;
+                self.$emit('sortresponse', json);
+            }, function (resp) {
+                console.log(resp);
+            });
+        },
+        getReports: function getReports(program) {
+            var self = this;
+            var stats = _.filter(self.programStats, { program_id: Number(program.id) });
+            if (stats.length) {
+                return _.map(stats, 'reporting_freq').join(',   ');
+            }
+        },
+        getTotalReports: function getTotalReports(program) {
+            var self = this;
+            return _.filter(self.programStats, { program_id: Number(program.id) }).length;
+        },
         getProgramsCompleted: function getProgramsCompleted(program) {
             var self = this;
-            var rs = _.filter(self.programStats, { program_id: Number(program.id) });
-            if (rs.length) {
-                console.log(rs);
+            var completed = 0;
+            var rsProgramStats = _.filter(self.programStats, { program_id: Number(program.id) });
+            if (rsProgramStats.length) {
+                var stat = {};
+                var rsSubmittedDates = [],
+                    submittedDate = {};
+                for (var i = rsProgramStats.length - 1; i >= 0; i--) {
+                    stat = rsProgramStats[i];
+                    var _rsSubmittedDates = _.filter(self.submittedDates, { program_stat_id: stat.id });
+                    if (_rsSubmittedDates.length) {
+                        ++completed;
+                    }
+                }
             }
+            return completed;
+        },
+        getProgramsInComplete: function getProgramsInComplete(program) {
+            var self = this;
+            var notCompleted = 0;
+            var rsProgramStats = _.filter(self.programStats, { program_id: Number(program.id) });
+            if (rsProgramStats.length) {
+                var stat = {};
+                var rsSubmittedDates = [],
+                    submittedDate = {};
+                for (var i = rsProgramStats.length - 1; i >= 0; i--) {
+                    stat = rsProgramStats[i];
+                    var _rsSubmittedDates2 = _.filter(self.submittedDates, { program_stat_id: stat.id });
+                    if (!_rsSubmittedDates2.length) {
+                        ++notCompleted;
+                    }
+                }
+            }
+            return notCompleted;
         },
         updateReport: function updateReport(program) {
             var self = this;
@@ -30662,7 +30725,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             });
         },
         createReportChild: function createReportChild(respReport) {
-            this.program_stats.unshift(respReport);
+            var self = this;
+            console.log(respReport);
+            self.program_stats.push(respReport);
         },
         addSubmittedDateChild: function addSubmittedDateChild(respSubmittedDate) {
             this.submitted_dates.push(respSubmittedDate);
@@ -30775,6 +30840,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
 
 
 
@@ -30785,6 +30852,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         self.fetchProgramManagers();
         self.fetchPrograms();
         self.fetchProgramStats();
+        self.fetchSubmittedDates();
     },
 
     props: {
@@ -30796,11 +30864,29 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         return {
             users: [], programs: [],
             program_stats: [],
+            submitted_dates: [],
             imgUrl: '/img/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png'
         };
     },
 
     methods: {
+        reSortPrograms: function reSortPrograms(respPrograms) {
+            var self = this;
+            self.programs = respPrograms;
+        },
+        fetchSubmittedDates: function fetchSubmittedDates() {
+            var self = this;
+            self.$http.get('/submitted/date').then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    self.submitted_dates = json;
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
         fetchProgramStats: function fetchProgramStats() {
             var self = this;
             self.$http.get('/program/stats').then(function (resp) {
@@ -30967,6 +31053,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         saveReport: function saveReport() {
             var self = this;
             self.form.program_id = self.program.id;
+            if (self.form.reporting_freq === 'others') {
+                self.form.reporting_freq = self.form.others;
+            }
             self.$http.post('/program/stats', self.form).then(function (resp) {
                 if (resp.status === 200) {
                     var json = resp.body;
@@ -31029,6 +31118,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -31045,6 +31135,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
 
     methods: {
+        viewFile: function viewFile(report) {
+            var self = this;
+            self.$emit('viewfile', report);
+        },
         downloadFile: function downloadFile(report) {
             var self = this;
             self.$emit('downloadfile', report);
@@ -31066,7 +31160,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         getUser: function getUser(uploadedBy) {
             var self = this;
             var rs = _.filter(self.users, { id: uploadedBy });
-            return rs[0].name;
+            if (rs.length) {
+                return rs[0].name;
+            }
         },
         formatDate: function formatDate(date) {
             return __WEBPACK_IMPORTED_MODULE_0_moment___default()(date).format('MMMM DD, YYYY, dddd');
@@ -31084,8 +31180,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_alertify_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_alertify_js__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__list_of_report_files_vue__ = __webpack_require__(189);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__list_of_report_files_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__list_of_report_files_vue__);
-//
-//
 //
 //
 //
@@ -31154,26 +31248,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
 
     methods: {
-        downloadFileNow: function downloadFileNow(stat) {
+        previewFile: function previewFile(stat) {
             var self = this;
-            self.$http.post('/download/report/file', {
-                program_id: self.program.id,
-                program_stat_id: stat.program_stat_id,
-                source: stat.source
-            }).then(function (resp) {
-                if (resp.status === 200) {
-                    var json = resp.body;
-                    console.log(json);
-                }
-            }, function (resp) {
-                if (resp.status === 422) {
-                    console.log(resp);
-                }
-            });
+            var url = '/report/files/view/' + self.program.id + '/' + stat.program_stat_id + '/' + stat.source;
+            window.open(url, "_blank");
         },
         uploadTemporaryFiles: function uploadTemporaryFiles() {
             var self = this;
-            var form = document.forms.namedItem("yourformname"); // high importance!, here you need change "yourformname" with the name of your form
+            var form = document.forms.namedItem("form-report-files"); // high importance!, here you need change "yourformname" with the name of your form
             var formdata = new FormData(form); // high importance!
             self.whileUploading = true;
             $.ajax({
@@ -31281,6 +31363,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 
@@ -31302,11 +31390,45 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     data: function data() {
         return {
             date: '',
-            whenSubmitting: false
+            whenSubmitting: false,
+            whileUploading: false
         };
     },
 
     methods: {
+        uploadFiles: function uploadFiles() {
+            var self = this;
+            var form = document.forms.namedItem("submit-report-form"); // high importance!, here you need change "yourformname" with the name of your form
+            var formdata = new FormData(form); // high importance!
+            self.whileUploading = true;
+            $.ajax({
+                async: true,
+                type: "POST",
+                dataType: "json", // or html if you want...
+                contentType: false, // high importance!
+                url: 'upload/report/file', // you need change it.
+                data: formdata, // high importance!
+                processData: false, // high importance!
+                success: function success(data) {
+                    //do thing with data....
+                    $('#submit-report-form')[0].reset();
+                    if (data.uploaded === true) {
+                        setTimeout(function () {
+                            __WEBPACK_IMPORTED_MODULE_6_alertify_js___default.a.success('File successfully uploaded');
+                            self.whileUploading = false;
+                            self.report_files.unshift(data.report_file);
+                        }, 700);
+                    }
+                    if (data.file_found === false) {
+                        setTimeout(function () {
+                            __WEBPACK_IMPORTED_MODULE_6_alertify_js___default.a.error("Please select a file to upload!");
+                            self.whileUploading = false;
+                        }, 1500);
+                    }
+                },
+                timeout: 10000
+            });
+        },
         submitReport: function submitReport() {
             var self = this;
             self.whenSubmitting = true;
@@ -31322,6 +31444,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                         self.whenSubmitting = false;
                         $('#modal-submit-report').modal('hide');
                         self.$emit('addsubmitteddates', json);
+                        self.uploadFiles();
                     }
                 }
             }, function (resp) {
@@ -31350,6 +31473,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* WEBPACK VAR INJECTION */(function($) {Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_moment__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_moment___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_moment__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_alertify_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_alertify_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_alertify_js__);
 //
 //
 //
@@ -31389,6 +31514,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -31403,6 +31535,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
     },
     methods: {
+        deleteProgram: function deleteProgram(stat) {
+            var self = this;
+            __WEBPACK_IMPORTED_MODULE_1_alertify_js___default.a.confirm("Are you sure ?", function () {
+                var resource = self.$resource('program/stat{/id}');
+                resource.delete({
+                    id: stat.id
+                }).then(function (resp) {
+                    console.log(resp);
+                }, function (resp) {
+                    console.log(resp);
+                });
+            }, function () {
+                // user clicked "cancel"
+            });
+        },
         uploadReportFiles: function uploadReportFiles(stat) {
             var self = this;
             self.$emit('setcurrentreport', stat);
@@ -52046,7 +52193,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "program-stats": _vm.program_stats,
       "user": _vm.user,
       "programs": _vm.programs,
+      "submitted-dates": _vm.submitted_dates,
       "users": _vm.users
+    },
+    on: {
+      "sortresponse": _vm.reSortPrograms
     }
   })], 1)])]), _vm._v(" "), _c('modal-create-program', {
     attrs: {
@@ -52275,7 +52426,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   }, [_c('div', {
     staticClass: "modal-dialog",
     staticStyle: {
-      "width": "280px"
+      "width": "360px"
     },
     attrs: {
       "role": "document"
@@ -52284,7 +52435,12 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "modal-content"
   }, [_vm._m(0), _vm._v(" "), _c('div', {
     staticClass: "modal-body"
-  }, [_c('label', [_vm._v("Date submitted\n                 "), _c('input', {
+  }, [_c('form', {
+    attrs: {
+      "id": "submit-report-form",
+      "name": "submit-report-form"
+    }
+  }, [_c('label', [_vm._v("Date submitted\n                       "), _c('input', {
     directives: [{
       name: "model",
       rawName: "v-model",
@@ -52293,6 +52449,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }],
     staticClass: "form-control",
     attrs: {
+      "name": "date_submitted",
       "id": "date-submitted",
       "type": "text"
     },
@@ -52304,6 +52461,28 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         if ($event.target.composing) { return; }
         _vm.date = $event.target.value
       }
+    }
+  })]), _vm._v(" "), _c('label', [_vm._v("Report File")]), _vm._v(" "), _c('input', {
+    attrs: {
+      "name": "photo",
+      "type": "file",
+      "multiple": ""
+    }
+  }), _c('br'), _vm._v(" "), _c('input', {
+    attrs: {
+      "name": "program_stat_id",
+      "type": "text"
+    },
+    domProps: {
+      "value": _vm.programStat.id
+    }
+  }), _vm._v(" "), _c('input', {
+    attrs: {
+      "name": "program_id",
+      "type": "text"
+    },
+    domProps: {
+      "value": _vm.programStat.program_id
     }
   })])]), _vm._v(" "), _c('div', {
     staticClass: "modal-footer"
@@ -52467,14 +52646,13 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "modal-body"
   }, [_c('form', {
     attrs: {
-      "id": "yourformname",
-      "name": "yourformname"
+      "id": "form-report-files",
+      "name": "form-report-files"
     }
   }, [_c('input', {
     attrs: {
       "name": "photo",
-      "type": "file",
-      "multiple": ""
+      "type": "file"
     }
   }), _c('br'), _vm._v(" "), _c('input', {
     attrs: {
@@ -52514,7 +52692,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "report-files": _vm.report_files
     },
     on: {
-      "downloadfile": _vm.downloadFileNow
+      "viewfile": _vm.previewFile
     }
   })], 1), _vm._v(" "), _vm._m(1)])])])])
 },staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -52539,12 +52717,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "type": "button",
       "data-dismiss": "modal"
     }
-  }, [_vm._v("Close")]), _vm._v(" "), _c('button', {
-    staticClass: "btn btn-primary",
-    attrs: {
-      "type": "button"
-    }
-  }, [_vm._v("Save changes")])])
+  }, [_vm._v("Close")])])
 }]}
 module.exports.render._withStripped = true
 if (false) {
@@ -52588,10 +52761,24 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           _vm.uploadReportFiles(stat)
         }
       }
-    })])])
+    })]), _vm._v(" "), _c('td', [(_vm.checkIfSubmitted(stat) !== 1) ? _c('span', [_c('i', {
+      staticClass: "fa fa-remove",
+      staticStyle: {
+        "cursor": "pointer"
+      },
+      on: {
+        "click": function($event) {
+          _vm.deleteProgram(stat)
+        }
+      }
+    })]) : _vm._e()])])
   }))])])
 },staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('thead', [_c('tr', [_c('th', [_vm._v("Reporting Freq.")]), _vm._v(" "), _c('th', [_vm._v("Status")]), _vm._v(" "), _c('th', [_vm._v("Deadline")]), _vm._v(" "), _c('th', [_vm._v("Date submitted")]), _vm._v(" "), _c('td', [_vm._v("files")])])])
+  return _c('thead', [_c('tr', [_c('th', [_vm._v("Reporting Freq.")]), _vm._v(" "), _c('th', [_vm._v("Status")]), _vm._v(" "), _c('th', [_vm._v("Deadline")]), _vm._v(" "), _c('th', [_vm._v("Date submitted")]), _vm._v(" "), _c('th', [_vm._v("files")]), _vm._v(" "), _c('th', {
+    attrs: {
+      "width": "1"
+    }
+  })])])
 }]}
 module.exports.render._withStripped = true
 if (false) {
@@ -52614,7 +52801,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         "innerHTML": _vm._s(_vm.getFileType(report.source))
       }
     })]), _vm._v(" "), _c('td', [_vm._v(_vm._s(report.source))]), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.getUser(report.uploaded_by)))]), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.formatDate(report.created_at)))]), _vm._v(" "), _c('th', [_c('i', {
-      staticClass: "fa fa-download fa-2x",
+      staticClass: "fa fa-2x fa-eye text-primary",
       staticStyle: {
         "cursor": "pointer"
       },
@@ -52623,7 +52810,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       },
       on: {
         "click": function($event) {
-          _vm.downloadFile(report)
+          _vm.viewFile(report)
         }
       }
     })])])
@@ -52971,20 +53158,39 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       }
     }
   })])]), _vm._v(" "), _c('br'), _vm._v(" "), _c('table', {
-    staticClass: "table table-hover",
+    staticClass: "table table-hover table-striped",
     staticStyle: {
-      "padding": "20px",
-      "font-size": "12px"
+      "padding": "20px"
     }
-  }, [_c('thead', [_c('tr', [_c('th', [_vm._v("Program Names")]), _vm._v(" "), _c('th', [_vm._v("Program Managers")]), _vm._v(" "), _c('th', {
+  }, [_c('thead', [_c('tr', {
+    staticStyle: {
+      "cursor": "pointer"
+    }
+  }, [_c('th', {
+    on: {
+      "click": function($event) {
+        _vm.sortBy('program_name')
+      }
+    }
+  }, [_vm._v("Program Names")]), _vm._v(" "), _c('th', {
+    on: {
+      "click": function($event) {
+        _vm.sortBy('program_manager')
+      }
+    }
+  }, [_vm._v("Program Managers")]), _vm._v(" "), _c('th', [_vm._v("Report")]), _vm._v(" "), _c('th', {
     staticStyle: {
       "text-align": "center"
     }
-  }, [_vm._v("Completed")]), _vm._v(" "), _c('th', {
+  }, [_vm._v("Completed Report")]), _vm._v(" "), _c('th', {
     staticStyle: {
       "text-align": "center"
     }
-  }, [_vm._v("Pending")]), _vm._v(" "), _c('th', {
+  }, [_vm._v("Pending Report")]), _vm._v(" "), _c('th', {
+    staticStyle: {
+      "text-align": "center"
+    }
+  }, [_vm._v("Total Report")]), _vm._v(" "), _c('th', {
     directives: [{
       name: "show",
       rawName: "v-show",
@@ -53001,7 +53207,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           }
         }
       }
-    }, [_vm._v("\n                        " + _vm._s(program.program_name.toUpperCase()) + "\n                    ")])], 1), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.getName(program).toUpperCase()))]), _vm._v(" "), _c('td', {
+    }, [_vm._v("\n                        " + _vm._s(program.program_name.toUpperCase()) + "\n                    ")])], 1), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.getName(program).toUpperCase()))]), _vm._v(" "), _c('th', [_vm._v(_vm._s(_vm.getReports(program)))]), _vm._v(" "), _c('td', {
       staticStyle: {
         "text-align": "center"
       }
@@ -53009,7 +53215,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       staticStyle: {
         "text-align": "center"
       }
-    }, [_vm._v("0")]), _vm._v(" "), _c('td', {
+    }, [_vm._v(_vm._s(_vm.getProgramsInComplete(program)))]), _vm._v(" "), _c('td', {
+      staticStyle: {
+        "text-align": "center"
+      }
+    }, [_vm._v(_vm._s(_vm.getTotalReports(program)))]), _vm._v(" "), _c('td', {
       directives: [{
         name: "show",
         rawName: "v-show",
@@ -53083,7 +53293,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_vm._v("add report to " + _vm._s(_vm.program.program_name))])]), _vm._v(" "), _c('div', {
     staticClass: "panel-body"
-  }, [(_vm.noReportWasFound) ? _c('div', [_vm._v("\n                    No Report was found for\n                ")]) : _c('div', [_c('report-list', {
+  }, [(!_vm.program_stats.length) ? _c('div', [_vm._v("\n                    No Report was found for\n                ")]) : _c('div', [_c('report-list', {
     attrs: {
       "program": _vm.program,
       "program-stats": _vm.program_stats,

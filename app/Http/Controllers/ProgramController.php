@@ -8,6 +8,10 @@ use App\Program as Program;
 
 class ProgramController extends Controller
 {
+    public function sortBy($attr, $type){
+        $data = Program::orderBy($attr, $type)->get();
+        return response()->json($data);
+    }
     public function insert(Request $request){
     	$this->validate($request, [
 	        'program_name' => 'required|max:100|min:3',

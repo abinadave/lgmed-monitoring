@@ -8,8 +8,8 @@
                 <h4 class="modal-title" id="myModalLabel">{{ program.program_name }}, {{ currentStat.reporting_freq }} Report Files</h4>
               </div>
               <div class="modal-body">
-                    <form id="yourformname" name="yourformname">
-                        <input name="photo" type="file" multiple><br>
+                    <form id="form-report-files" name="form-report-files">
+                        <input name="photo" type="file"><br>
                         <input name="program_stat_id" type="hidden" :value="currentStat.id">
                         <input name="program_id" type="hidden" :value="currentStat.program_id">
                         <button :disabled="whileUploading" class="btn btn-primary btn-info" 
@@ -23,18 +23,16 @@
                         </button>
                     </form>
                     <hr>
-                    <report-files @downloadfile="downloadFileNow" :users="users" :report-files="report_files"></report-files>
+                    <report-files @viewfile="previewFile" :users="users" :report-files="report_files"></report-files>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
               </div>
             </div>
           </div>
         </div>
     </div>
 </template>
-
 <script>
     import alertify from 'alertify.js'
     import CompListOfReportFiles from './list_of_report_files.vue'
@@ -67,26 +65,14 @@
             console.log('Component mounted.');
         },
         methods: {
-            downloadFileNow(stat){
+            previewFile(stat){
                 let self = this;
-                self.$http.post('/download/report/file', {
-                    program_id: self.program.id,
-                    program_stat_id: stat.program_stat_id,
-                    source: stat.source
-                }).then((resp) => {
-                    if (resp.status === 200) {
-                        let json = resp.body;
-                        console.log(json)
-                    }
-                }, (resp) => {
-                    if (resp.status === 422) {
-                      console.log(resp)
-                    }
-                });
+                let url = '/report/files/view/'+self.program.id+'/'+stat.program_stat_id+'/' + stat.source;
+                window.open(url, "_blank");
             },
             uploadTemporaryFiles(){
                 let self = this;
-                var form = document.forms.namedItem("yourformname"); // high importance!, here you need change "yourformname" with the name of your form
+                var form = document.forms.namedItem("form-report-files"); // high importance!, here you need change "yourformname" with the name of your form
                 var formdata = new FormData(form); // high importance!
                 self.whileUploading = true;
                 $.ajax({

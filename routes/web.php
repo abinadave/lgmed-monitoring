@@ -30,4 +30,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('report/files/{id}', 'ReportFileController@fetchByStatId');
     Route::post('upload/report/file', 'ReportFileController@upload');
     Route::post('download/report/file', 'ReportFileController@downloadFile');
+    Route::get('programs/sortby/{program_name}/{type}', 'ProgramController@sortBy');
+    Route::delete('program/stat/{id}', 'ProgramStatsController@delete');
+    Route::get('report/files/view/{prog_id}/{stat_id}/{source}', 'ReportFileController@viewFile');
 });

@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Storage;
 
 class ReportFileController extends Controller
 {
+    public function viewFile($prog_id, $stat_id, $source){
+        $directory = storage_path(). '/'. 'app/' . 'report-files/' . $prog_id . '-' . $stat_id . '/' . $source;
+        return response()->file($directory);
+    }
     public function fetchByStatId($id){
     	$data = ReportFile::where('program_stat_id', $id)->get();
     	return response()->json($data);

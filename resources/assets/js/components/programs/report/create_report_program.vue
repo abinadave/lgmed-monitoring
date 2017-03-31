@@ -84,6 +84,9 @@
             saveReport(){
                 let self = this;
                 self.form.program_id = self.program.id;
+                if(self.form.reporting_freq === 'others'){
+                    self.form.reporting_freq = self.form.others;
+                }
                 self.$http.post('/program/stats', self.form).then((resp) => {
                     if (resp.status === 200) {
                         let json = resp.body;

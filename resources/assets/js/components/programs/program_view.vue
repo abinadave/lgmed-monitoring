@@ -9,10 +9,10 @@
                         <button @click="createReport" class="btn btn-xs btn-default pull-right" style="margin-right: 10px">add report to {{ program.program_name}}</button>
                     </div>
                     <div class="panel-body">
-                    <div v-if="noReportWasFound">
+                    <div v-if="!program_stats.length">
                         No Report was found for
                     </div>
-                    <div v-else="noReportWasFound">
+                    <div v-else>
                         <report-list 
                         @setcurrentreport="setCurrentReport" 
                         :program="program" 
@@ -89,7 +89,9 @@
                 });
             },
             createReportChild(respReport){
-                this.program_stats.unshift(respReport);
+                let self = this;
+                console.log(respReport)
+                self.program_stats.push(respReport);
             },
             addSubmittedDateChild(respSubmittedDate){
                 this.submitted_dates.push(respSubmittedDate);
@@ -156,7 +158,7 @@
         },
         watch: {
             '$route.params.id': function(newVal){
-                console.log(newVal)
+                console.log(newVal);
             }
         },
         components: {

@@ -9,13 +9,15 @@
             </div><!-- /input-group -->
         </div><!-- /.col-lg-6 -->
         <br>
-        <table style="padding: 20px; font-size: 12px" class="table table-hover">
+        <table style="padding: 20px" class="table table-hover table-striped">
             <thead>
-                <tr>
-                    <th>Program Names</th>
-                    <th>Program Managers</th>
-                    <th style="text-align: center">Completed</th>
-                    <th style="text-align: center">Pending</th>
+                <tr style="cursor: pointer">
+                    <th @click="sortBy('program_name')">Program Names</th>
+                    <th @click="sortBy('program_manager')">Program Managers</th>
+                    <th>Report</th>
+                    <th style="text-align: center">Completed Report</th>
+                    <th style="text-align: center">Pending Report</th>
+                    <th style="text-align: center">Total Report</th>
                     <th v-show="user.usertype === 'program-manager'">edit report</th>
                 </tr>
             </thead>
@@ -27,8 +29,10 @@
                         </router-link>
                     </td>
                     <td>{{ getName(program).toUpperCase() }}</td>
+                    <th>{{ getReports(program) }}</th>
                     <td style="text-align: center">{{ getProgramsCompleted(program) }}</td>
-                    <td style="text-align: center">0</td>
+                    <td style="text-align: center">{{ getProgramsInComplete(program) }}</td>
+                    <td style="text-align: center">{{ getTotalReports(program) }}</td>
                     <td v-show="user.usertype === 'program-manager'">
                         <i @click="updateReport(program)" style="cursor: pointer" class="fa fa-pencil"></i>
                     </td>
@@ -55,20 +59,77 @@
             },
             programStats: {
                 type: Array
+            },
+            submittedDates: {
+                type: Array
             }
         },
         data(){
             return {
-                search: ''
+                search: '',
+                clickSort: 0
             }
         },
         methods: {
+            sortBy(attr){
+                let self = this;
+                ++self.clickSort;
+                let type = (self.clickSort % 2 === 0) ? 'asc' : 'desc';
+                let resource =self.$resource('programs/sortby{/attribute}{/type}'); 
+                resource.get({
+                    attribute: attr,
+                    type: type
+                }).then((resp) => {
+                    let json = resp.body;
+                    self.$emit('sortresponse', json);
+                }, (resp) => {
+                    console.log(resp);
+                })
+            },
+            getReports(program){
+                let self = this;
+                let stats = _.filter(self.programStats, {program_id: Number(program.id)});
+                if (stats.length) {
+                    return _.map(stats, 'reporting_freq').join(',   ');
+                }
+            },
+            getTotalReports(program){
+                let self = this;
+                return _.filter(self.programStats, {program_id: Number(program.id)}).length;
+            },
             getProgramsCompleted(program){
                 let self = this;
-                let rs = _.filter(self.programStats, {program_id: Number(program.id)});
-                if (rs.length) {
-                    console.log(rs)
+                let completed = 0
+                let rsProgramStats = _.filter(self.programStats, {program_id: Number(program.id)});
+                if (rsProgramStats.length) {
+                    let stat = {};
+                    let rsSubmittedDates = [], submittedDate = {};
+                    for (var i = rsProgramStats.length - 1; i >= 0; i--) {
+                        stat = rsProgramStats[i];
+                        let rsSubmittedDates = _.filter(self.submittedDates, { program_stat_id: stat.id});
+                        if (rsSubmittedDates.length) {
+                            ++completed;
+                        }
+                    }
                 }
+                return completed;
+            },
+            getProgramsInComplete(program){
+                let self = this;
+                let notCompleted = 0
+                let rsProgramStats = _.filter(self.programStats, {program_id: Number(program.id)});
+                if (rsProgramStats.length) {
+                    let stat = {};
+                    let rsSubmittedDates = [], submittedDate = {};
+                    for (var i = rsProgramStats.length - 1; i >= 0; i--) {
+                        stat = rsProgramStats[i];
+                        let rsSubmittedDates = _.filter(self.submittedDates, { program_stat_id: stat.id});
+                        if (!rsSubmittedDates.length) {
+                            ++notCompleted;
+                        }
+                    }
+                }
+                return notCompleted;
             },
             updateReport(program){
                 let self = this;

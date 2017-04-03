@@ -18,6 +18,7 @@ Auth::routes();
 Route::get('/home', 'HomeController@index');
 
 Route::group(['middleware' => 'auth'], function () {
+    Route::get('province/lgu', 'ProvinceController@fetch');
     Route::post('user', 'UserController@insert');
     Route::get('user/management', 'UserController@fetch');
     Route::post('program', 'ProgramController@insert');
@@ -28,9 +29,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('submitted/date', 'SubmittedDateController@insert');
     Route::get('submitted/date', 'SubmittedDateController@fetch');
     Route::get('report/files/{id}', 'ReportFileController@fetchByStatId');
+    Route::get('report/file', 'ReportFileController@fetch');
     Route::post('upload/report/file', 'ReportFileController@upload');
     Route::post('download/report/file', 'ReportFileController@downloadFile');
     Route::get('programs/sortby/{program_name}/{type}', 'ProgramController@sortBy');
     Route::delete('program/stat/{id}', 'ProgramStatsController@delete');
     Route::get('report/files/view/{prog_id}/{stat_id}/{source}', 'ReportFileController@viewFile');
+    Route::post('checked/lgu', 'CheckedLguController@findAndinsert');
 });

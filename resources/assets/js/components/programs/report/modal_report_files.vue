@@ -6,6 +6,7 @@
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">{{ program.program_name }}, {{ currentStat.reporting_freq }} Report Files</h4>
+                , files: {{ reportFiles.length }}
               </div>
               <div class="modal-body">
                     <form id="form-report-files" name="form-report-files">
@@ -51,6 +52,9 @@
                 type: Array
             },
             users: {
+                type: Array
+            },
+            reportFiles: {
                 type: Array
             }
         },
@@ -131,6 +135,7 @@
             'currentStat': function(newVal){
                 this.fetchFiles();
                 this.getProgram();
+                console.log(newVal)
             }
         }
     }

@@ -30633,6 +30633,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__report_modal_submit_report_now_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__report_modal_submit_report_now_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__report_modal_report_files_vue__ = __webpack_require__(190);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__report_modal_report_files_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__report_modal_report_files_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue__ = __webpack_require__(223);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue__);
 //
 //
 //
@@ -30679,6 +30681,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
@@ -30690,6 +30707,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         this.fetchUsers();
         this.fetchSubmittedDates();
         this.fetchPrograms();
+        this.fetchReportFiles();
+        this.fetchLguAndProvince();
     },
     data: function data() {
         return {
@@ -30701,7 +30720,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             },
             noReportWasFound: false,
             currentStat: {},
-            submitted_dates: []
+            submitted_dates: [], report_files: [],
+            lgus: [], provinces: [],
+            modalFilteredLgus: [],
+            currentProvince: {
+                name: ''
+            }
         };
     },
 
@@ -30711,6 +30735,49 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
     },
     methods: {
+        fetchCheckedLguByProvince: function fetchCheckedLguByProvince(headers) {
+            console.log(headers);
+        },
+        updateCurrentProvince: function updateCurrentProvince(json) {
+            var self = this;
+            var provinceId = json.id;
+            self.currentProvince = json;
+            var rsLgus = _.filter(self.lgus, { province_id: provinceId });
+            self.modalFilteredLgus = rsLgus;
+        },
+        fetchLguAndProvince: function fetchLguAndProvince() {
+            var self = this;
+            self.$http.get('/province/lgu').then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    self.provinces = json.provinces;
+                    self.lgus = json.lgus;
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
+        addnewReportFileChild: function addnewReportFileChild(file) {
+            var self = this;
+            self.report_files.push(file);
+            self.currentStat = { program_id: 0, id: 0, reporting_freq: '', submission_date: '' };
+        },
+        fetchReportFiles: function fetchReportFiles() {
+            var self = this;
+            self.$http.get('/report/file').then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    self.report_files = json;
+                    console.log(self.report_files.length);
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
         fetchPrograms: function fetchPrograms() {
             var self = this;
             self.$http.get('/program/management').then(function (resp) {
@@ -30726,7 +30793,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         createReportChild: function createReportChild(respReport) {
             var self = this;
-            console.log(respReport);
             self.program_stats.push(respReport);
         },
         addSubmittedDateChild: function addSubmittedDateChild(respSubmittedDate) {
@@ -30801,7 +30867,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         'modal-create-report': __WEBPACK_IMPORTED_MODULE_0__report_create_report_program_vue___default.a,
         'modal-submit-report': __WEBPACK_IMPORTED_MODULE_2__report_modal_submit_report_now_vue___default.a,
         'modal-report-files': __WEBPACK_IMPORTED_MODULE_3__report_modal_report_files_vue___default.a,
-        'report-list': __WEBPACK_IMPORTED_MODULE_1__report_report_list_vue___default.a
+        'report-list': __WEBPACK_IMPORTED_MODULE_1__report_report_list_vue___default.a,
+        'modal-checked-lgus': __WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue___default.a
     }
 });
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1)))
@@ -31215,6 +31282,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
 
 
 
@@ -31233,6 +31301,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             type: Array
         },
         users: {
+            type: Array
+        },
+        reportFiles: {
             type: Array
         }
     },
@@ -31314,6 +31385,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         'currentStat': function currentStat(newVal) {
             this.fetchFiles();
             this.getProgram();
+            console.log(newVal);
         }
     }
 });
@@ -31385,6 +31457,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     props: {
         programStat: {
             type: Object
+        },
+        reportFiles: {
+            type: Array
         }
     },
     data: function data() {
@@ -31398,7 +31473,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     methods: {
         uploadFiles: function uploadFiles() {
             var self = this;
-            var form = document.forms.namedItem("submit-report-form"); // high importance!, here you need change "yourformname" with the name of your form
+            var form = document.forms.namedItem("submitreportform"); // high importance!, here you need change "yourformname" with the name of your form
             var formdata = new FormData(form); // high importance!
             self.whileUploading = true;
             $.ajax({
@@ -31411,12 +31486,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 processData: false, // high importance!
                 success: function success(data) {
                     //do thing with data....
-                    $('#submit-report-form')[0].reset();
+                    $('#submitreportform')[0].reset();
                     if (data.uploaded === true) {
                         setTimeout(function () {
                             __WEBPACK_IMPORTED_MODULE_6_alertify_js___default.a.success('File successfully uploaded');
                             self.whileUploading = false;
-                            self.report_files.unshift(data.report_file);
+                            self.$emit('addreportfile', data.report_file);
                         }, 700);
                     }
                     if (data.file_found === false) {
@@ -31520,6 +31595,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -31532,9 +31616,33 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         submittedDates: {
             type: Array
+        },
+        reportFiles: {
+            type: Array
+        },
+        provinces: {
+            type: Array
         }
     },
     methods: {
+        getTotalFiles: function getTotalFiles(stat) {
+            var self = this;
+            var rs = _.filter(self.reportFiles, { program_stat_id: stat.id });
+            return rs.length;
+        },
+        showLgus: function showLgus(province, stat) {
+            var self = this;
+            self.$emit('fetchcheckedbyprovince', {
+                stat_id: stat.id,
+                province_id: province.id
+            });
+            self.$emit('setcurrentreport', stat);
+            self.$emit('newprovince', province);
+            $('#modal-lgus').modal('show');
+        },
+        getSuTotalSubmitted: function getSuTotalSubmitted() {
+            return 0;
+        },
         deleteProgram: function deleteProgram(stat) {
             var self = this;
             __WEBPACK_IMPORTED_MODULE_1_alertify_js___default.a.confirm("Are you sure ?", function () {
@@ -52256,7 +52364,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "form-group"
   }, [_c('label', {
     staticClass: "control-label"
-  }, [_vm._v("Submission Date")]), _vm._v(" "), _c('input', {
+  }, [_vm._v("Submission Date / Deadline")]), _vm._v(" "), _c('input', {
     directives: [{
       name: "model",
       rawName: "v-model",
@@ -52433,14 +52541,16 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_c('div', {
     staticClass: "modal-content"
-  }, [_vm._m(0), _vm._v(" "), _c('div', {
-    staticClass: "modal-body"
-  }, [_c('form', {
+  }, [_c('div', {
+    staticClass: "modal-header"
+  }, [_vm._m(0), _vm._v(" "), _c('h4', {
+    staticClass: "modal-title",
     attrs: {
-      "id": "submit-report-form",
-      "name": "submit-report-form"
+      "id": "myModalLabel"
     }
-  }, [_c('label', [_vm._v("Date submitted\n                       "), _c('input', {
+  }, [_vm._v("Report Submission " + _vm._s(_vm.reportFiles.length))])]), _vm._v(" "), _c('div', {
+    staticClass: "modal-body"
+  }, [_c('label', [_vm._v("Date submitted\n                   "), _c('input', {
     directives: [{
       name: "model",
       rawName: "v-model",
@@ -52462,7 +52572,12 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         _vm.date = $event.target.value
       }
     }
-  })]), _vm._v(" "), _c('label', [_vm._v("Report File")]), _vm._v(" "), _c('input', {
+  })]), _vm._v(" "), _c('form', {
+    attrs: {
+      "id": "submitreportform",
+      "name": "submitreportform"
+    }
+  }, [_c('label', [_vm._v("Report File")]), _vm._v(" "), _c('input', {
     attrs: {
       "name": "photo",
       "type": "file",
@@ -52471,7 +52586,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   }), _c('br'), _vm._v(" "), _c('input', {
     attrs: {
       "name": "program_stat_id",
-      "type": "text"
+      "type": "hidden"
     },
     domProps: {
       "value": _vm.programStat.id
@@ -52479,7 +52594,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   }), _vm._v(" "), _c('input', {
     attrs: {
       "name": "program_id",
-      "type": "text"
+      "type": "hidden"
     },
     domProps: {
       "value": _vm.programStat.program_id
@@ -52503,9 +52618,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_vm._v("Save changes")])])])])])])
 },staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('div', {
-    staticClass: "modal-header"
-  }, [_c('button', {
+  return _c('button', {
     staticClass: "close",
     attrs: {
       "type": "button",
@@ -52516,12 +52629,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "aria-hidden": "true"
     }
-  }, [_vm._v("×")])]), _vm._v(" "), _c('h4', {
-    staticClass: "modal-title",
-    attrs: {
-      "id": "myModalLabel"
-    }
-  }, [_vm._v("Report Submission")])])
+  }, [_vm._v("×")])])
 }]}
 module.exports.render._withStripped = true
 if (false) {
@@ -52642,7 +52750,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "id": "myModalLabel"
     }
-  }, [_vm._v(_vm._s(_vm.program.program_name) + ", " + _vm._s(_vm.currentStat.reporting_freq) + " Report Files")])]), _vm._v(" "), _c('div', {
+  }, [_vm._v(_vm._s(_vm.program.program_name) + ", " + _vm._s(_vm.currentStat.reporting_freq) + " Report Files")]), _vm._v("\n            , files: " + _vm._s(_vm.reportFiles.length) + "\n          ")]), _vm._v(" "), _c('div', {
     staticClass: "modal-body"
   }, [_c('form', {
     attrs: {
@@ -52733,53 +52841,33 @@ if (false) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', [_c('table', {
-    staticClass: "table table-hover table-striped"
-  }, [_vm._m(0), _vm._v(" "), _c('tbody', _vm._l((_vm.programStats), function(stat) {
+    staticClass: "table table-hover table-striped table-bordered",
+    staticStyle: {
+      "font-size": "12px"
+    }
+  }, [_c('thead', [_c('tr', [_c('th', [_vm._v("Reporting Freq.")]), _vm._v(" "), _c('th', [_vm._v("Status")]), _vm._v(" "), _c('th', [_vm._v("Deadline")]), _vm._v(" "), _vm._l((_vm.provinces), function(province) {
+    return _c('th', [_vm._v(_vm._s(province.name))])
+  })], 2)]), _vm._v(" "), _c('tbody', _vm._l((_vm.programStats), function(stat) {
     return _c('tr', [_c('td', [_vm._v(_vm._s(stat.reporting_freq))]), _vm._v(" "), _c('td', [(_vm.checkIfSubmitted(stat) === 1) ? _c('span', [_c('b', {
       staticClass: "text-primary"
     }, [_vm._v("Submitted")])]) : _c('span', {
       staticClass: "text-danger"
-    }, [_c('b', [_vm._v("no report yet")])])]), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.formatDate(stat.submission_date)) + "   ( " + _vm._s(_vm.fromNOw(stat.submission_date)) + " )")]), _vm._v(" "), _c('td', [(_vm.checkIfSubmitted(stat) === 1) ? _c('span', [_vm._v("\n                      " + _vm._s(_vm.getSubmittedDate(stat)) + " \n                  ")]) : _c('span', [_c('a', {
-      staticStyle: {
-        "cursor": "pointer"
-      },
-      on: {
-        "click": function($event) {
-          _vm.confirmSubmission(stat)
+    }, [_c('b', [_vm._v("no report yet")])])]), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.formatDate(stat.submission_date)) + "   ( " + _vm._s(_vm.fromNOw(stat.submission_date)) + " )")]), _vm._v(" "), _vm._l((_vm.provinces), function(province) {
+      return _c('td', {
+        staticClass: "text-center"
+      }, [_c('a', {
+        staticStyle: {
+          "cursor": "pointer"
+        },
+        on: {
+          "click": function($event) {
+            _vm.showLgus(province, stat)
+          }
         }
-      }
-    }, [_vm._v("mark as submitted")])])]), _vm._v(" "), _c('td', [_c('i', {
-      staticClass: "fa fa-2x fa-folder",
-      staticStyle: {
-        "cursor": "pointer"
-      },
-      attrs: {
-        "aria-hidden": "true"
-      },
-      on: {
-        "click": function($event) {
-          _vm.uploadReportFiles(stat)
-        }
-      }
-    })]), _vm._v(" "), _c('td', [(_vm.checkIfSubmitted(stat) !== 1) ? _c('span', [_c('i', {
-      staticClass: "fa fa-remove",
-      staticStyle: {
-        "cursor": "pointer"
-      },
-      on: {
-        "click": function($event) {
-          _vm.deleteProgram(stat)
-        }
-      }
-    })]) : _vm._e()])])
+      }, [_vm._v(_vm._s(_vm.getSuTotalSubmitted()))])])
+    })], 2)
   }))])])
-},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('thead', [_c('tr', [_c('th', [_vm._v("Reporting Freq.")]), _vm._v(" "), _c('th', [_vm._v("Status")]), _vm._v(" "), _c('th', [_vm._v("Deadline")]), _vm._v(" "), _c('th', [_vm._v("Date submitted")]), _vm._v(" "), _c('th', [_vm._v("files")]), _vm._v(" "), _c('th', {
-    attrs: {
-      "width": "1"
-    }
-  })])])
-}]}
+},staticRenderFns: []}
 module.exports.render._withStripped = true
 if (false) {
   module.hot.accept()
@@ -53284,22 +53372,26 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       }
     }
   }, [_vm._v("back")])], 1), _vm._v(" "), _c('button', {
-    staticClass: "btn btn-xs btn-default pull-right",
+    staticClass: "btn btn-xs btn-success pull-right",
     staticStyle: {
       "margin-right": "10px"
     },
     on: {
       "click": _vm.createReport
     }
-  }, [_vm._v("add report to " + _vm._s(_vm.program.program_name))])]), _vm._v(" "), _c('div', {
+  }, [_vm._v("Add report to " + _vm._s(_vm.program.program_name))])]), _vm._v(" "), _c('div', {
     staticClass: "panel-body"
   }, [(!_vm.program_stats.length) ? _c('div', [_vm._v("\n                    No Report was found for\n                ")]) : _c('div', [_c('report-list', {
     attrs: {
       "program": _vm.program,
       "program-stats": _vm.program_stats,
-      "submitted-dates": _vm.submitted_dates
+      "submitted-dates": _vm.submitted_dates,
+      "report-files": _vm.report_files,
+      "provinces": _vm.provinces
     },
     on: {
+      "fetchcheckedbyprovince": _vm.fetchCheckedLguByProvince,
+      "newprovince": _vm.updateCurrentProvince,
       "setcurrentreport": _vm.setCurrentReport
     }
   })], 1)])])])]), _vm._v(" "), _c('modal-create-report', {
@@ -53312,9 +53404,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
   }), _vm._v(" "), _c('modal-submit-report', {
     attrs: {
       "program": _vm.program,
-      "program-stat": _vm.currentStat
+      "program-stat": _vm.currentStat,
+      "report-files": _vm.report_files
     },
     on: {
+      "addreportfile": _vm.addnewReportFileChild,
       "addsubmitteddates": _vm.addSubmittedDateChild
     }
   }), _vm._v(" "), _c('modal-report-files', {
@@ -53322,7 +53416,18 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "program-stats": _vm.program_stats,
       "programs": _vm.programs,
       "current-stat": _vm.currentStat,
-      "users": _vm.users
+      "users": _vm.users,
+      "report-files": _vm.report_files
+    }
+  }), _vm._v(" "), _c('modal-checked-lgus', {
+    attrs: {
+      "filtered-lgus": _vm.modalFilteredLgus,
+      "province": _vm.currentProvince,
+      "stat": _vm.currentStat,
+      "provinces": _vm.provinces
+    },
+    on: {
+      "setcurrentreport": _vm.setCurrentReport
     }
   })], 1)
 },staticRenderFns: []}
@@ -66700,6 +66805,211 @@ module.exports = Vue$3;
 __webpack_require__(138);
 module.exports = __webpack_require__(139);
 
+
+/***/ }),
+/* 216 */,
+/* 217 */,
+/* 218 */,
+/* 219 */,
+/* 220 */,
+/* 221 */,
+/* 222 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    mounted: function mounted() {
+        console.log('Component mounted.');
+    },
+
+    props: {
+        provinces: {
+            type: Array
+        },
+        filteredLgus: {
+            type: Array
+        },
+        province: {
+            type: Object
+        },
+        stat: {
+            type: Object
+        }
+    },
+    methods: {
+        markAsChecked: function markAsChecked(lgu) {
+            var self = this;
+            var headers = {
+                municipality_id: lgu.id,
+                province_id: self.province.id,
+                program_id: self.stat.program_id
+            };
+            self.$http.post('/checked/lgu', headers).then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    console.log(json);
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        }
+    },
+    watch: {
+        'stat': function stat(newVal) {
+            console.log(newVal.program_id);
+        }
+    }
+});
+
+/***/ }),
+/* 223 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Component = __webpack_require__(3)(
+  /* script */
+  __webpack_require__(222),
+  /* template */
+  __webpack_require__(224),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+Component.options.__file = "C:\\xampp\\htdocs\\lgmed-monitoring\\resources\\assets\\js\\components\\programs\\modal_checked_lgus.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] modal_checked_lgus.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-247fb53b", Component.options)
+  } else {
+    hotAPI.reload("data-v-247fb53b", Component.options)
+  }
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 224 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', [_c('div', {
+    staticClass: "modal fade",
+    attrs: {
+      "id": "modal-lgus",
+      "tabindex": "-1",
+      "role": "dialog",
+      "aria-labelledby": "myModalLabel"
+    }
+  }, [_c('div', {
+    staticClass: "modal-dialog",
+    attrs: {
+      "role": "document"
+    }
+  }, [_c('div', {
+    staticClass: "modal-content"
+  }, [_c('div', {
+    staticClass: "modal-header"
+  }, [_vm._m(0), _vm._v(" "), _c('h4', {
+    staticClass: "modal-title",
+    attrs: {
+      "id": "myModalLabel"
+    }
+  }, [_vm._v(_vm._s(_vm.province.name.toUpperCase()))])]), _vm._v(" "), _c('div', {
+    staticClass: "modal-body"
+  }, [_c('table', {
+    staticClass: "table table-bordered table-condensed table-striped"
+  }, [_vm._m(1), _vm._v(" "), _c('tbody', _vm._l((_vm.filteredLgus), function(lgu) {
+    return _c('tr', [_c('td', [_vm._v(_vm._s(lgu.name))]), _vm._v(" "), _c('td', {
+      on: {
+        "click": function($event) {
+          _vm.markAsChecked(lgu)
+        }
+      }
+    })])
+  }))])]), _vm._v(" "), _vm._m(2)])])])])
+},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('button', {
+    staticClass: "close",
+    attrs: {
+      "type": "button",
+      "data-dismiss": "modal",
+      "aria-label": "Close"
+    }
+  }, [_c('span', {
+    attrs: {
+      "aria-hidden": "true"
+    }
+  }, [_vm._v("×")])])
+},function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('thead', [_c('tr', [_c('th', [_vm._v("City / Municipality")]), _vm._v(" "), _c('th', {
+    attrs: {
+      "width": "50"
+    }
+  }, [_vm._v("Submitted")])])])
+},function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    staticClass: "modal-footer"
+  }, [_c('button', {
+    staticClass: "btn btn-default",
+    attrs: {
+      "type": "button",
+      "data-dismiss": "modal"
+    }
+  }, [_vm._v("Close")])])
+}]}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-hot-reload-api").rerender("data-v-247fb53b", module.exports)
+  }
+}
 
 /***/ })
 /******/ ]);

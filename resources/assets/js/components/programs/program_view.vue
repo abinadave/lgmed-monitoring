@@ -6,18 +6,22 @@
                     <div class="panel-heading">
                         <b title="PROGRAM TITLE">{{ program.program_name.toUpperCase() }}</b>
                         <span class="pull-right btn btn-default btn-xs"><router-link :to="{ name: 'programs' }">back</router-link></span>
-                        <button @click="createReport" class="btn btn-xs btn-default pull-right" style="margin-right: 10px">add report to {{ program.program_name}}</button>
+                        <button @click="createReport" class="btn btn-xs btn-success pull-right" style="margin-right: 10px">Add report to {{ program.program_name }}</button>
                     </div>
                     <div class="panel-body">
                     <div v-if="!program_stats.length">
                         No Report was found for
                     </div>
                     <div v-else>
-                        <report-list 
+                        <report-list
+                        @fetchcheckedbyprovince="fetchCheckedLguByProvince"
+                        @newprovince="updateCurrentProvince"
                         @setcurrentreport="setCurrentReport" 
-                        :program="program" 
+                        :program="program"
                         :program-stats="program_stats"
                         :submitted-dates="submitted_dates"
+                        :report-files="report_files"
+                        :provinces="provinces"
                         ></report-list>
                     </div>
                     </div>
@@ -30,9 +34,11 @@
         </modal-create-report>
 
         <modal-submit-report 
+        @addreportfile="addnewReportFileChild"
         @addsubmitteddates="addSubmittedDateChild"
         :program="program"
         :program-stat="currentStat"
+        :report-files="report_files"
         ></modal-submit-report>
 
         <modal-report-files 
@@ -40,7 +46,15 @@
         :programs="programs"
         :current-stat="currentStat"
         :users="users"
+        :report-files="report_files"
         ></modal-report-files>
+
+        <modal-checked-lgus 
+        @setcurrentreport="setCurrentReport"
+        :filtered-lgus="modalFilteredLgus"
+        :province="currentProvince"
+        :stat="currentStat"
+        :provinces="provinces"></modal-checked-lgus>
     </div>
 </template>
 
@@ -49,12 +63,15 @@
     import CompReportList   from './report/report_list.vue'
     import CompModalSubmit  from './report/modal_submit_report_now.vue'
     import CompReportFiles  from './report/modal_report_files.vue'
+    import CompModalLgus    from './modal_checked_lgus.vue'
     export default {
         mounted() {
             this.fetch();
             this.fetchUsers();
             this.fetchSubmittedDates();
             this.fetchPrograms();
+            this.fetchReportFiles();
+            this.fetchLguAndProvince();
         },
         data(){
             return {
@@ -63,10 +80,15 @@
                 program: {
                     program_name: '',
                     program_manager: ''
-                },
+                },    
                 noReportWasFound: false,
                 currentStat: {},
-                submitted_dates: []
+                submitted_dates: [], report_files: [],
+                lgus: [], provinces: [],
+                modalFilteredLgus: [],
+                currentProvince: {
+                    name: ''
+                }
             }
         },
         props: {
@@ -75,6 +97,49 @@
             }
         },
         methods: {
+            fetchCheckedLguByProvince(headers){
+                console.log(headers);
+            },
+            updateCurrentProvince(json){
+                let self = this;
+                let provinceId= json.id;
+                self.currentProvince = json;
+                let rsLgus = _.filter(self.lgus, { province_id: provinceId });
+                self.modalFilteredLgus = rsLgus;
+            },
+            fetchLguAndProvince(){
+                let self = this;
+                self.$http.get('/province/lgu').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.provinces = json.provinces;
+                        self.lgus = json.lgus;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
+            addnewReportFileChild(file){
+                let self = this;
+                self.report_files.push(file);
+                self.currentStat = { program_id: 0, id: 0, reporting_freq: '', submission_date: '' };
+            },
+            fetchReportFiles(){
+                let self = this;
+                self.$http.get('/report/file').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.report_files = json;
+                        console.log(self.report_files.length);
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             fetchPrograms(){
                 let self = this;
                 self.$http.get('/program/management').then((resp) => {
@@ -90,7 +155,6 @@
             },
             createReportChild(respReport){
                 let self = this;
-                console.log(respReport)
                 self.program_stats.push(respReport);
             },
             addSubmittedDateChild(respSubmittedDate){
@@ -165,7 +229,8 @@
             'modal-create-report': CompCreateReport,
             'modal-submit-report': CompModalSubmit,
             'modal-report-files': CompReportFiles,
-            'report-list': CompReportList
+            'report-list': CompReportList,
+            'modal-checked-lgus': CompModalLgus
         }
     }
 </script>

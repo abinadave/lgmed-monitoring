@@ -5,17 +5,17 @@
             <div class="modal-content" >
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Report Submission</h4>
+                <h4 class="modal-title" id="myModalLabel">Report Submission {{ reportFiles.length }}</h4>
               </div>
               <div class="modal-body">
-                   <form id="submit-report-form" name="submit-report-form">
-                        <label>Date submitted
-                           <input name="date_submitted" v-model="date" id="date-submitted" type="text" class="form-control">
-                        </label>
+                    <label>Date submitted
+                       <input name="date_submitted" v-model="date" id="date-submitted" type="text" class="form-control">
+                    </label>
+                   <form id="submitreportform" name="submitreportform">
                         <label>Report File</label>
                         <input name="photo" type="file" multiple><br>
-                        <input name="program_stat_id" type="text" :value="programStat.id">
-                        <input name="program_id" type="text" :value="programStat.program_id">
+                        <input name="program_stat_id" type="hidden" :value="programStat.id">
+                        <input name="program_id" type="hidden" :value="programStat.program_id">
                     </form>
               </div>
               <div class="modal-footer">
@@ -43,6 +43,9 @@
         props: {
             programStat: {
                 type: Object
+            },
+            reportFiles: {
+                type: Array
             }
         },
         data(){
@@ -55,7 +58,7 @@
         methods: {
             uploadFiles(){
                 let self = this;
-                var form = document.forms.namedItem("submit-report-form"); // high importance!, here you need change "yourformname" with the name of your form
+                var form = document.forms.namedItem("submitreportform"); // high importance!, here you need change "yourformname" with the name of your form
                 var formdata = new FormData(form); // high importance!
                 self.whileUploading = true;
                 $.ajax({
@@ -68,12 +71,12 @@
                     processData: false, // high importance!
                     success: function (data) {
                         //do thing with data....
-                        $('#submit-report-form')[0].reset();
+                        $('#submitreportform')[0].reset();
                         if (data.uploaded === true) {
                             setTimeout(function(){
                                 alertify.success('File successfully uploaded');
                                 self.whileUploading = false;
-                                self.report_files.unshift(data.report_file);
+                                self.$emit('addreportfile', data.report_file);
                             }, 700);
                         }
                         if (data.file_found === false) {

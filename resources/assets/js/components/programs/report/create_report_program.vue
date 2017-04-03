@@ -9,7 +9,7 @@
               </div>
               <div class="modal-body">
                     <div class="form-group">
-                      <label class="control-label">Submission Date</label>
+                      <label class="control-label">Submission Date / Deadline</label>
                       <input v-model="form.submission_date" id="datepicker" type="text" class="form-control input-form" />
                     </div>
                     <div class="form-group">

@@ -30498,6 +30498,7 @@ module.exports = function spread(callback) {
 //
 //
 //
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     mounted: function mounted() {
@@ -30592,10 +30593,12 @@ module.exports = function spread(callback) {
                         self.$emit('addcheckedlgu', model);
                         _this.afterChecked();
                     }
+                    _this.afterChecked();
                 }
             }, function (resp) {
                 if (resp.status === 422) {
                     console.log(resp);
+                    _this.afterChecked();
                 }
             });
         },
@@ -30603,7 +30606,7 @@ module.exports = function spread(callback) {
             var self = this;
             setTimeout(function () {
                 self.whileSavingCheckedLgu = false;
-            }, 300);
+            }, 700);
         },
         evaluateResult: function evaluateResult(json) {
             var self = this;
@@ -30616,9 +30619,47 @@ module.exports = function spread(callback) {
                 self.$emit('unchecklgus', _models);
             }
         },
+        deleteExistingCheckedLgu: function deleteExistingCheckedLgu(models) {
+            var self = this;
+            self.$http.post('/delete_existing_checked_lgu', {
+                models: models
+            }).then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    console.log(json);
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
         checkOrUncheck: function checkOrUncheck(type) {
             var self = this;
             var cities = self.getCurrentLgus(self.province.id);
+            if (self.checkedLgus.length > 0 && cities.length !== self.checkedLgus.length) {
+                if (type === 'check-all') {
+                    var models = self.checkedLgus;
+                    self.deleteExistingCheckedLgu(models);
+                } else {
+                    self.$http.post('remove/checked/lgu', {
+                        checked_lgu: self.checkedLgus
+                    }).then(function (resp) {
+                        if (resp.status === 200) {
+                            var json = resp.body;
+                            var _models2 = json.models;
+                            self.$emit('checkedlguremove', _models2);
+                        }
+                    }, function (resp) {
+                        console.log(resp);
+                    });
+                }
+            } else {
+                self.SaveOrDelete(type, cities);
+            }
+        },
+        SaveOrDelete: function SaveOrDelete(type, cities) {
+            var self = this;
             self.$http.post('/checkall/checked/lgu', {
                 type: type,
                 province_id: self.province.id,
@@ -30637,24 +30678,7 @@ module.exports = function spread(callback) {
             });
         }
     },
-    watch: {
-        'checkedLgus': function checkedLgus(newVal) {
-            var self = this;
-            var checkedLength = newVal.length;
-            var cities = self.getCurrentLgus(self.province.id);
-            if (checkedLength === cities.length) {
-                // self.checkAll = true;
-                $('#check-all').prop('checked', true);
-            } else if (checkedLength === 0) {
-                $('#check-all').prop('checked', false);
-                // self.checkAll = false;
-                $('#check-all').prop('checked', false);
-            }
-        },
-        'stat': function stat(newVal) {
-            // console.log(newVal.program_id);
-        }
-    }
+    watch: {}
 });
 /* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1)))
 
@@ -30908,6 +30932,28 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -30953,6 +30999,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
     },
     methods: {
+        deleteCheckedLgu: function deleteCheckedLgu(models) {
+            var self = this;
+            var model = {};
+            var foundIndexes = [],
+                foundIndex = 0;
+            for (var i = models.length - 1; i >= 0; i--) {
+                model = models[i];
+                var rs = _.filter(self.actual_checked_lgus, { id: Number(model.id) });
+                if (rs.length) {
+                    var actual = rs[0];
+                    foundIndex = self.actual_checked_lgus.findIndex(function (actual) {
+                        return actual.id === model.id;
+                    });
+                    self.actual_checked_lgus.splice(foundIndex, 1);
+                }
+            }
+        },
         uncheckAllLgu: function uncheckAllLgu(deletedCheckedLgu) {
             var self = this;
             var indexes = [],
@@ -31133,7 +31196,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         'currentProgramId': function currentProgramId(programId) {
             var self = this;
-            self.$http.post('/fetch/checked/lgu/by/program', {
+            self.$http.post('/fetch_checked_lgu_by_program', {
                 program_id: programId
             }).then(function (resp) {
                 if (resp.status === 200) {
@@ -31842,14 +31905,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_moment___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_moment__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_alertify_js__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_alertify_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_alertify_js__);
-//
-//
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -53292,30 +53347,24 @@ if (false) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('div', [_c('table', {
-    staticClass: "table table-hover table-striped table-bordered",
-    staticStyle: {
-      "font-size": "12px"
-    }
-  }, [_c('thead', [_c('tr', [_c('th', [_vm._v("Reporting Freq.")]), _vm._v(" "), _c('th', [_vm._v("Status")]), _vm._v(" "), _c('th', [_vm._v("Deadline")]), _vm._v(" "), _vm._l((_vm.provinces), function(province) {
+    staticClass: "table table-hover table-striped table-bordered"
+  }, [_c('thead', [_c('tr', [_c('th', [_vm._v("Reporting Freq.")]), _vm._v(" "), _c('th', [_vm._v("Deadline")]), _vm._v(" "), _vm._l((_vm.provinces), function(province) {
     return _c('th', [_vm._v(_vm._s(province.name))])
   })], 2)]), _vm._v(" "), _c('tbody', _vm._l((_vm.programStats), function(stat) {
-    return _c('tr', [_c('td', [_vm._v(_vm._s(stat.reporting_freq))]), _vm._v(" "), _c('td', [(_vm.checkIfSubmitted(stat) === 1) ? _c('span', [_c('b', {
-      staticClass: "text-primary"
-    }, [_vm._v("Submitted")])]) : _c('span', {
-      staticClass: "text-danger"
-    }, [_c('b', [_vm._v("no report yet")])])]), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.formatDate(stat.submission_date)) + "   ( " + _vm._s(_vm.fromNOw(stat.submission_date)) + " )")]), _vm._v(" "), _vm._l((_vm.provinces), function(province) {
+    return _c('tr', [_c('td', [_vm._v(_vm._s(stat.reporting_freq))]), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.formatDate(stat.submission_date)) + "   ( " + _vm._s(_vm.fromNOw(stat.submission_date)) + " )")]), _vm._v(" "), _vm._l((_vm.provinces), function(province) {
       return _c('td', {
         staticClass: "text-center"
       }, [_c('a', {
         staticStyle: {
-          "cursor": "pointer"
+          "cursor": "pointer",
+          "font-weight": "bolder"
         },
         on: {
           "click": function($event) {
             _vm.showLgus(province, stat)
           }
         }
-      }, [_vm._v("\n                   " + _vm._s(_vm.getSuTotalSubmitted(province, stat)) + "\n                   ")])])
+      }, [_vm._v("\n                      " + _vm._s(_vm.getSuTotalSubmitted(province, stat)) + "\n                   ")])])
     })], 2)
   }))])])
 },staticRenderFns: []}
@@ -53832,7 +53881,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_vm._v("Add report to " + _vm._s(_vm.program.program_name))])]), _vm._v(" "), _c('div', {
     staticClass: "panel-body"
-  }, [(!_vm.program_stats.length) ? _c('div', [_vm._v("\n                    No Report was found for\n                ")]) : _c('div', [_c('report-list', {
+  }, [(!_vm.program_stats.length) ? _c('div', [_vm._v("\n                    Fetching please wait.... \n                    "), _c('i', {
+    staticClass: "fa fa-spinner fa-2x fa-pulse fa-fw"
+  }), _vm._v(" "), _c('span', {
+    staticClass: "sr-only"
+  }, [_vm._v("Loading...")])]) : _c('div', [_c('report-list', {
     attrs: {
       "program": _vm.program,
       "program-stats": _vm.program_stats,
@@ -53846,7 +53899,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "newprovince": _vm.updateCurrentProvince,
       "setcurrentreport": _vm.setCurrentReport
     }
-  })], 1)])])])]), _vm._v(" "), _c('modal-create-report', {
+  })], 1), _vm._v(" "), _c('div')])])])]), _vm._v(" "), _c('modal-create-report', {
     attrs: {
       "program": _vm.program
     },
@@ -53886,7 +53939,8 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "addcheckedlgu": _vm.createCheckedLgu,
       "removecheckedlgu": _vm.deletedCheckedLgu,
       "checkalllgus": _vm.checkAllAddLgu,
-      "unchecklgus": _vm.uncheckAllLgu
+      "unchecklgus": _vm.uncheckAllLgu,
+      "checkedlguremove": _vm.deleteCheckedLgu
     }
   })], 1)
 },staticRenderFns: []}

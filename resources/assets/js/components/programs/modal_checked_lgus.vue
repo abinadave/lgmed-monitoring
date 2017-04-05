@@ -27,6 +27,7 @@
                           </tr>
                       </tbody>
                   </table>
+                  
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -125,10 +126,12 @@
                             self.$emit('addcheckedlgu', model);
                             this.afterChecked();
                         }
+                        this.afterChecked();
                     }
                 }, (resp) => {
                     if (resp.status === 422) {
                       console.log(resp);
+                      this.afterChecked();
                     }
                 });
             },
@@ -136,7 +139,7 @@
                 let self = this;
                 setTimeout(function(){
                     self.whileSavingCheckedLgu = false;
-                }, 300);
+                }, 700);
             },
             evaluateResult(json){
                 let self = this;
@@ -149,9 +152,47 @@
                     self.$emit('unchecklgus', models);
                 }
             },
+            deleteExistingCheckedLgu(models){
+                let self = this;
+                self.$http.post('/delete_existing_checked_lgu', {
+                    models: models
+                }).then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        console.log(json);
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             checkOrUncheck(type){
                 let self = this;
                 let cities = self.getCurrentLgus(self.province.id);
+                if (self.checkedLgus.length > 0 && cities.length !== self.checkedLgus.length) {
+                    if (type === 'check-all') {
+                        let models = self.checkedLgus;
+                        self.deleteExistingCheckedLgu(models);
+                    }else {
+                        self.$http.post('remove/checked/lgu', {
+                            checked_lgu: self.checkedLgus
+                        }).then((resp) => {
+                            if (resp.status === 200) {
+                                let json = resp.body;
+                                let models = json.models;
+                                self.$emit('checkedlguremove', models);
+                            }
+                        }, (resp) => {
+                            console.log(resp);
+                        });
+                    }
+                }else {
+                    self.SaveOrDelete(type, cities);
+                }
+            },
+            SaveOrDelete(type, cities){
+                let self = this;
                 self.$http.post('/checkall/checked/lgu', {
                     type: type,
                     province_id: self.province.id,
@@ -171,22 +212,7 @@
             }
         },
         watch: {
-            'checkedLgus': function(newVal){
-                let self = this;
-                let checkedLength = newVal.length;
-                let cities = self.getCurrentLgus(self.province.id);
-                if (checkedLength === cities.length) {
-                    // self.checkAll = true;
-                    $('#check-all').prop('checked', true);
-                }else if(checkedLength === 0){
-                    $('#check-all').prop('checked', false)
-                    // self.checkAll = false;
-                    $('#check-all').prop('checked', false);
-                }
-            },
-            'stat': function(newVal){
-                // console.log(newVal.program_id);
-            }
+           
         }
     }
 </script>

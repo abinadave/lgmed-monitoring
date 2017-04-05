@@ -1,10 +1,9 @@
 <template>
     <div>
-       <table class="table table-hover table-striped table-bordered" style="font-size: 12px">
+       <table class="table table-hover table-striped table-bordered" >
            <thead>
                <tr>
                    <th>Reporting Freq.</th>
-                   <th>Status</th>
                    <th>Deadline</th>
                    <!-- 
                    <th>Date submitted</th>
@@ -18,14 +17,7 @@
            <tbody>
                <tr v-for="stat in programStats">
                    <td>{{ stat.reporting_freq }}</td>
-                   <td>
-                       <span v-if="checkIfSubmitted(stat) === 1">
-                           <b class="text-primary">Submitted</b>
-                       </span>
-                       <span class="text-danger" v-else>
-                           <b>no report yet</b>
-                       </span>
-                   </td>
+                   
                    <td>{{ formatDate(stat.submission_date) }} &nbsp;&nbsp;( {{ fromNOw(stat.submission_date) }} )</td>
                    <!--  <td>
                       <span v-if="checkIfSubmitted(stat) === 1">
@@ -44,8 +36,8 @@
                    <td>{{ getTotalFiles(stat) }}</td>
                     -->
                     <td class="text-center" v-for="province in provinces">
-                       <a @click="showLgus(province, stat)" style="cursor: pointer">
-                       {{ getSuTotalSubmitted(province, stat) }}
+                       <a @click="showLgus(province, stat)" style="cursor: pointer; font-weight: bolder;">
+                          {{ getSuTotalSubmitted(province, stat) }}
                        </a>
                     </td>
                </tr>

@@ -10,7 +10,9 @@
                     </div>
                     <div class="panel-body">
                     <div v-if="!program_stats.length">
-                        No Report was found for
+                        Fetching please wait.... 
+                        <i class="fa fa-spinner fa-2x fa-pulse fa-fw"></i>
+                        <span class="sr-only">Loading...</span>
                     </div>
                     <div v-else>
                         <report-list
@@ -25,10 +27,29 @@
                         :actual-checked-lgus="actual_checked_lgus"
                         ></report-list>
                     </div>
+                    <div>
+                        <!-- <table class="table table-bordered table-condensed" style="font-size: 10px; display: none">
+                              <tr>
+                                  <th>PROGRAM_ID</th>
+                                  <th>PROGRAM_STAT_ID</th>
+                                  <th>MUNICIPALITY_ID</th>
+                                  <th>PROVINCE_ID</th>
+                                  <th>ID</th>
+                              </tr>
+                              <tr v-for="actual_model in actual_checked_lgus">
+                                  <td>{{ actual_model.program_id }}</td>
+                                  <td>{{ actual_model.program_stat_id }}</td>
+                                  <td>{{ actual_model.municipality_id }}</td>
+                                  <td>{{ actual_model.province_id }}</td>
+                                  <td>{{ actual_model.id }}</td>
+                              </tr>
+                        </table> -->
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <modal-create-report 
         @newreportcreated="createReportChild"
         :program="program">
@@ -56,6 +77,7 @@
         @removecheckedlgu="deletedCheckedLgu"
         @checkalllgus="checkAllAddLgu"
         @unchecklgus="uncheckAllLgu"
+        @checkedlguremove="deleteCheckedLgu"
         :filtered-lgus="modalFilteredLgus"
         :province="currentProvince"
         :stat="currentStat"
@@ -110,6 +132,20 @@
             }
         },
         methods: {
+            deleteCheckedLgu(models){
+                let self = this;
+                let model = {};
+                let foundIndexes = [], foundIndex = 0;
+                for (var i = models.length - 1; i >= 0; i--) {
+                    model = models[i];
+                    let rs = _.filter(self.actual_checked_lgus, { id: Number(model.id)});
+                    if (rs.length) {
+                        let actual = rs[0];
+                        foundIndex = self.actual_checked_lgus.findIndex(actual => actual.id === model.id);
+                        self.actual_checked_lgus.splice(foundIndex, 1);
+                    }
+                }
+            },
             uncheckAllLgu(deletedCheckedLgu){
                 let self = this;
                 let indexes = [], index = 0;
@@ -289,7 +325,7 @@
             },
             'currentProgramId': function(programId){
                 let self = this;
-                self.$http.post('/fetch/checked/lgu/by/program', {
+                self.$http.post('/fetch_checked_lgu_by_program', {
                     program_id: programId
                 }).then((resp) => {
                     if (resp.status === 200) {

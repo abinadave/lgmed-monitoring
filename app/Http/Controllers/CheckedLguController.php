@@ -9,6 +9,20 @@ use App\CheckedLgu as CheckedLgu;
 
 class CheckedLguController extends Controller
 {
+    public function deleteExisting(Request $request){
+        echo "Hit in controller";
+    }
+    public function remove(Request $request){
+        $checkedLgu = $request->input('checked_lgu');
+        $ids = array_pluck($checkedLgu, 'id');
+        $checked_lgus_found = CheckedLgu::whereIn('id', $ids)->get();
+        $deleted = CheckedLgu::whereIn('id', $ids)->delete();
+        return response()->json([
+            'deleted'      => $deleted,
+            'deleted_ids'  => $ids,
+            'models' => $checked_lgus_found
+        ]);
+    }
     public function checkOrUncheck(Request $request){
         $program_id      = $request->input('program_id');
         $program_stat_id = $request->input('program_stat_id');

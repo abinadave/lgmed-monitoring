@@ -37,6 +37,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('report/files/view/{prog_id}/{stat_id}/{source}', 'ReportFileController@viewFile');
     Route::post('checked/lgu', 'CheckedLguController@findAndinsert');
     Route::post('fetch/checked/lgu', 'CheckedLguController@fetchByHeaders');
-    Route::post('fetch/checked/lgu/by/program', 'CheckedLguController@fetchCheckedByProgram');
+    Route::post('fetch_checked_lgu_by_program', 'CheckedLguController@fetchCheckedByProgram');
     Route::post('checkall/checked/lgu', 'CheckedLguController@checkOrUncheck');
+    Route::post('remove/checked/lgu', 'CheckedLguController@remove');
+    Route::post('delete_existing_checked_lgu', 'CheckedLguController@deleteExisting');
 });

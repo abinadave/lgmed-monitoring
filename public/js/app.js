@@ -30497,6 +30497,7 @@ module.exports = function spread(callback) {
 //
 //
 //
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     mounted: function mounted() {
@@ -30534,6 +30535,10 @@ module.exports = function spread(callback) {
     },
 
     methods: {
+        markAllAsCheck: function markAllAsCheck() {
+            var self = this;
+            // self.checkOrUncheck('check-all')
+        },
         getCurrentLgus: function getCurrentLgus(pid) {
             var self = this;
             return self.lgus.filter(function (index) {
@@ -30598,25 +30603,24 @@ module.exports = function spread(callback) {
             var self = this;
             setTimeout(function () {
                 self.whileSavingCheckedLgu = false;
-            }, 500);
+            }, 300);
         },
         evaluateResult: function evaluateResult(json) {
             var self = this;
             if (json.saved.length) {
                 var models = json.saved;
                 self.$emit('checkalllgus', models);
+            } else if (json.deleted.length) {
+                // alert(json.deleted)
+                var _models = json.deleted;
+                self.$emit('unchecklgus', _models);
             }
-        }
-    },
-    watch: {
-        'stat': function stat(newVal) {
-            // console.log(newVal.program_id);
         },
-        'checkAll': function checkAll(newVal) {
+        checkOrUncheck: function checkOrUncheck(type) {
             var self = this;
             var cities = self.getCurrentLgus(self.province.id);
             self.$http.post('/checkall/checked/lgu', {
-                type: newVal === true ? 'check-all' : 'uncheck-all',
+                type: type,
                 province_id: self.province.id,
                 program_id: self.stat.program_id,
                 program_stat_id: self.stat.id,
@@ -30631,6 +30635,24 @@ module.exports = function spread(callback) {
                     console.log(resp);
                 }
             });
+        }
+    },
+    watch: {
+        'checkedLgus': function checkedLgus(newVal) {
+            var self = this;
+            var checkedLength = newVal.length;
+            var cities = self.getCurrentLgus(self.province.id);
+            if (checkedLength === cities.length) {
+                // self.checkAll = true;
+                $('#check-all').prop('checked', true);
+            } else if (checkedLength === 0) {
+                $('#check-all').prop('checked', false);
+                // self.checkAll = false;
+                $('#check-all').prop('checked', false);
+            }
+        },
+        'stat': function stat(newVal) {
+            // console.log(newVal.program_id);
         }
     }
 });
@@ -30885,6 +30907,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
 
 
 
@@ -30930,9 +30953,34 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
     },
     methods: {
+        uncheckAllLgu: function uncheckAllLgu(deletedCheckedLgu) {
+            var self = this;
+            var indexes = [],
+                index = 0;
+            var model = {},
+                rs = [];
+            deletedCheckedLgu.forEach(function (model) {
+                rs = _.filter(self.actual_checked_lgus, { id: model.id });
+                if (rs.length) {
+                    index = self.actual_checked_lgus.findIndex(function (actual) {
+                        return actual.id === model.id;
+                    });
+                    indexes.push(index);
+                }
+            });
+            indexes.forEach(function (i) {
+                self.actual_checked_lgus.splice(i, 1);
+            });
+        },
         checkAllAddLgu: function checkAllAddLgu(models) {
             var self = this;
-            self.actual_checked_lgus.push(models);
+            var rs = [];
+            for (var i = models.length - 1; i >= 0; i--) {
+                rs = _.filter(self.actual_checked_lgus, { id: models[i].id });
+                if (!rs.length) {
+                    self.actual_checked_lgus.push(models[i]);
+                }
+            }
         },
         deletedCheckedLgu: function deletedCheckedLgu(model) {
             var self = this;
@@ -31096,6 +31144,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 if (resp.status === 422) {
                     console.log(resp);
                 }
+            });
+        },
+        'actual_checked_lgus': function actual_checked_lgus(newVal) {
+            var self = this;
+            self.fetchCheckedLguByProvince({
+                program_id: self.currentProgramId,
+                program_stat_id: self.currentStat.id,
+                province_id: self.currentProvince.id
             });
         }
     },
@@ -52635,39 +52691,35 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_vm._v("\n            " + _vm._s(_vm.province.name.toUpperCase()) + " " + _vm._s(_vm.lgus.length))])]), _vm._v(" "), _c('div', {
     staticClass: "modal-body"
-  }, [_c('label', [_vm._v("Check all: "), _c('input', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.checkAll),
-      expression: "checkAll"
-    }],
-    attrs: {
-      "type": "checkbox"
-    },
-    domProps: {
-      "checked": Array.isArray(_vm.checkAll) ? _vm._i(_vm.checkAll, null) > -1 : (_vm.checkAll)
-    },
+  }, [_c('button', {
+    staticClass: "btn btn-success btn-xs",
     on: {
-      "__c": function($event) {
-        var $$a = _vm.checkAll,
-          $$el = $event.target,
-          $$c = $$el.checked ? (true) : (false);
-        if (Array.isArray($$a)) {
-          var $$v = null,
-            $$i = _vm._i($$a, $$v);
-          if ($$c) {
-            $$i < 0 && (_vm.checkAll = $$a.concat($$v))
-          } else {
-            $$i > -1 && (_vm.checkAll = $$a.slice(0, $$i).concat($$a.slice($$i + 1)))
-          }
-        } else {
-          _vm.checkAll = $$c
-        }
+      "click": function($event) {
+        _vm.checkOrUncheck('check-all')
       }
     }
-  })]), _vm._v(" "), _c('table', {
-    staticClass: "table table-bordered table-condensed table-striped"
+  }, [_vm._v("Check all "), _c('i', {
+    staticClass: "fa fa-check",
+    attrs: {
+      "aria-hidden": "true"
+    }
+  })]), _vm._v(" "), _c('button', {
+    staticClass: "btn btn-danger btn-xs",
+    on: {
+      "click": function($event) {
+        _vm.checkOrUncheck('uncheck-all')
+      }
+    }
+  }, [_vm._v("Un Check all "), _c('i', {
+    staticClass: "fa fa-remove",
+    attrs: {
+      "aria-hidden": "true"
+    }
+  })]), _c('br'), _vm._v(" "), _c('table', {
+    staticClass: "table table-bordered table-condensed table-striped",
+    staticStyle: {
+      "margin-top": "10px"
+    }
   }, [_vm._m(1), _vm._v(" "), _c('tbody', _vm._l((_vm.filteredLgus), function(lgu) {
     return _c('tr', [_c('td', [_vm._v(_vm._s(lgu.name))]), _vm._v(" "), _c('td', {
       staticClass: "text-center"
@@ -53833,7 +53885,8 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "setcurrentreport": _vm.setCurrentReport,
       "addcheckedlgu": _vm.createCheckedLgu,
       "removecheckedlgu": _vm.deletedCheckedLgu,
-      "checkalllgus": _vm.checkAllAddLgu
+      "checkalllgus": _vm.checkAllAddLgu,
+      "unchecklgus": _vm.uncheckAllLgu
     }
   })], 1)
 },staticRenderFns: []}

@@ -55,6 +55,7 @@
         @addcheckedlgu="createCheckedLgu"
         @removecheckedlgu="deletedCheckedLgu"
         @checkalllgus="checkAllAddLgu"
+        @unchecklgus="uncheckAllLgu"
         :filtered-lgus="modalFilteredLgus"
         :province="currentProvince"
         :stat="currentStat"
@@ -109,9 +110,30 @@
             }
         },
         methods: {
+            uncheckAllLgu(deletedCheckedLgu){
+                let self = this;
+                let indexes = [], index = 0;
+                let model = {}, rs = [];
+                deletedCheckedLgu.forEach(function(model){
+                    rs = _.filter(self.actual_checked_lgus, { id: model.id  });
+                    if (rs.length) {
+                        index = self.actual_checked_lgus.findIndex(actual => actual.id === model.id);
+                        indexes.push(index);
+                    }
+                });
+                indexes.forEach(function(i){
+                    self.actual_checked_lgus.splice(i, 1);
+                });
+            },
             checkAllAddLgu(models){
                 let self = this;
-                self.actual_checked_lgus.push(models);
+                let rs = [];
+                for (var i = models.length - 1; i >= 0; i--) {
+                    rs = _.filter(self.actual_checked_lgus, { id: models[i].id});
+                    if (!rs.length) {
+                        self.actual_checked_lgus.push(models[i])
+                    }
+                }
             },
             deletedCheckedLgu(model){
                 let self = this;
@@ -278,6 +300,14 @@
                     if (resp.status === 422) {
                       console.log(resp)
                     }
+                });
+            },
+            'actual_checked_lgus': function(newVal){
+                let self = this;
+                self.fetchCheckedLguByProvince({
+                    program_id: self.currentProgramId,
+                    program_stat_id: self.currentStat.id,
+                    province_id: self.currentProvince.id
                 });
             }
         },

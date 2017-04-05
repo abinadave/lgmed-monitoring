@@ -14,18 +14,21 @@ class CheckedLguController extends Controller
         $program_stat_id = $request->input('program_stat_id');
         $province_id     = $request->input('province_id');
         $type     = $request->input('type');
-        $deleted_count = $this->deleteFirst($request);
+        $deleted_count = CheckedLgu::where('program_id', $request->input('program_id'))
+                    ->where('program_stat_id', $request->input('program_stat_id'))
+                    ->where('province_id', $request->input('province_id'))
+                    ->count();
         $saved = array();
         $deleted = array();
-        if ($type == 'check-all') {
+        $deleted = $this->deleteFirst($request);
+        if ($type === 'check-all') {
             $saved = $this->checkAll($request);
-        }else {
-            $deleted = $this->checkAll();
         }
         return response()->json([
             'deleted_count' => $deleted_count,
             'deleted' => $deleted,
-            'saved' => $saved
+            'saved' => $saved,
+            'type' => $type
         ]);
     }
     private function checkAll($request){
@@ -45,6 +48,10 @@ class CheckedLguController extends Controller
     }
     private function deleteFirst($request){
         $deleted = CheckedLgu::where('program_id', $request->input('program_id'))
+                    ->where('program_stat_id', $request->input('program_stat_id'))
+                    ->where('province_id', $request->input('province_id'))
+                    ->get();
+        CheckedLgu::where('program_id', $request->input('program_id'))
                     ->where('program_stat_id', $request->input('program_stat_id'))
                     ->where('province_id', $request->input('province_id'))
                     ->delete();

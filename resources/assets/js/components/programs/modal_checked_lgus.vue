@@ -9,8 +9,9 @@
                 {{ province.name.toUpperCase() }} {{ lgus.length }}</h4>
               </div>
               <div class="modal-body">
-                  <label>Check all: <input type="checkbox" v-model="checkAll"></label>
-                  <table class="table table-bordered table-condensed table-striped">
+                  <button @click="checkOrUncheck('check-all')" class="btn btn-success btn-xs">Check all <i class="fa fa-check" aria-hidden="true"></i></button>
+                  <button @click="checkOrUncheck('uncheck-all')" class="btn btn-danger btn-xs">Un Check all <i class="fa fa-remove" aria-hidden="true"></i></button><br>
+                  <table class="table table-bordered table-condensed table-striped" style="margin-top: 10px">
                       <thead>
                           <tr>
                               <th>City / Municipality</th>
@@ -71,6 +72,10 @@
             }
         },
         methods: {
+            markAllAsCheck(){
+                let self = this;
+                // self.checkOrUncheck('check-all')
+            },
             getCurrentLgus(pid){
                 let self = this;
                 return self.lgus.filter(function(index) {
@@ -131,25 +136,24 @@
                 let self = this;
                 setTimeout(function(){
                     self.whileSavingCheckedLgu = false;
-                }, 500);
+                }, 300);
             },
             evaluateResult(json){
                 let self = this;
                 if (json.saved.length) {
                     let models = json.saved;
                     self.$emit('checkalllgus', models);
+                }else if(json.deleted.length) {
+                    // alert(json.deleted)
+                    let models = json.deleted;
+                    self.$emit('unchecklgus', models);
                 }
-            }
-        },
-        watch: {
-            'stat': function(newVal){
-                // console.log(newVal.program_id);
             },
-            'checkAll': function(newVal){
+            checkOrUncheck(type){
                 let self = this;
                 let cities = self.getCurrentLgus(self.province.id);
                 self.$http.post('/checkall/checked/lgu', {
-                    type: (newVal === true) ? 'check-all' : 'uncheck-all',
+                    type: type,
                     province_id: self.province.id,
                     program_id: self.stat.program_id,
                     program_stat_id: self.stat.id,
@@ -164,6 +168,24 @@
                       console.log(resp)
                     }
                 });
+            }
+        },
+        watch: {
+            'checkedLgus': function(newVal){
+                let self = this;
+                let checkedLength = newVal.length;
+                let cities = self.getCurrentLgus(self.province.id);
+                if (checkedLength === cities.length) {
+                    // self.checkAll = true;
+                    $('#check-all').prop('checked', true);
+                }else if(checkedLength === 0){
+                    $('#check-all').prop('checked', false)
+                    // self.checkAll = false;
+                    $('#check-all').prop('checked', false);
+                }
+            },
+            'stat': function(newVal){
+                // console.log(newVal.program_id);
             }
         }
     }

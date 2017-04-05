@@ -22,6 +22,7 @@
                         :submitted-dates="submitted_dates"
                         :report-files="report_files"
                         :provinces="provinces"
+                        :actual-checked-lgus="actual_checked_lgus"
                         ></report-list>
                     </div>
                     </div>
@@ -51,10 +52,16 @@
 
         <modal-checked-lgus 
         @setcurrentreport="setCurrentReport"
+        @addcheckedlgu="createCheckedLgu"
+        @removecheckedlgu="deletedCheckedLgu"
+        @checkalllgus="checkAllAddLgu"
         :filtered-lgus="modalFilteredLgus"
         :province="currentProvince"
         :stat="currentStat"
-        :provinces="provinces"></modal-checked-lgus>
+        :program="program"
+        :provinces="provinces"
+        :checked-lgus="checked_lgus"
+        :lgus="lgus"></modal-checked-lgus>
     </div>
 </template>
 
@@ -78,6 +85,7 @@
                 users: [], program_stats: [],
                 programs: [],
                 program: {
+                    id: 0,
                     program_name: '',
                     program_manager: ''
                 },    
@@ -86,9 +94,13 @@
                 submitted_dates: [], report_files: [],
                 lgus: [], provinces: [],
                 modalFilteredLgus: [],
+                checked_lgus: [],
+                actual_checked_lgus: [],
                 currentProvince: {
                     name: ''
-                }
+                },
+                /* current program id of the panel */
+                currentProgramId: 0
             }
         },
         props: {
@@ -97,8 +109,36 @@
             }
         },
         methods: {
+            checkAllAddLgu(models){
+                let self = this;
+                self.actual_checked_lgus.push(models);
+            },
+            deletedCheckedLgu(model){
+                let self = this;
+                let index = self.actual_checked_lgus.findIndex
+                    (
+                    checked => checked.municipality_id === model.municipality_id &&
+                               checked.program_stat_id === model.program_stat_id &&
+                               checked.province_id     === model.province_id
+                    );
+                    self.actual_checked_lgus.splice(index , 1);
+            },
+            createCheckedLgu(json){
+                let self = this;
+                self.actual_checked_lgus.push(json);
+            },
             fetchCheckedLguByProvince(headers){
-                console.log(headers);
+                let self = this;
+                self.$http.post('fetch/checked/lgu', headers).then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.checked_lgus = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
             },
             updateCurrentProvince(json){
                 let self = this;
@@ -203,6 +243,7 @@
                 }).then((resp) => {
                     if (resp.status === 200) {
                         let json = resp.body;
+                        self.currentProgramId = json.program.id;
                         self.program = json.program;
                         for (var i = json.reports.length - 1; i >= 0; i--) {
                             self.program_stats.push(json.reports[i]);
@@ -222,7 +263,22 @@
         },
         watch: {
             '$route.params.id': function(newVal){
-                console.log(newVal);
+                // console.log(newVal);
+            },
+            'currentProgramId': function(programId){
+                let self = this;
+                self.$http.post('/fetch/checked/lgu/by/program', {
+                    program_id: programId
+                }).then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.actual_checked_lgus = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
             }
         },
         components: {

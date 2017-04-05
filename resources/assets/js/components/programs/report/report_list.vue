@@ -44,7 +44,9 @@
                    <td>{{ getTotalFiles(stat) }}</td>
                     -->
                     <td class="text-center" v-for="province in provinces">
-                       <a @click="showLgus(province, stat)" style="cursor: pointer">{{ getSuTotalSubmitted() }}</a>
+                       <a @click="showLgus(province, stat)" style="cursor: pointer">
+                       {{ getSuTotalSubmitted(province, stat) }}
+                       </a>
                     </td>
                </tr>
            </tbody>
@@ -71,6 +73,9 @@
             },
             provinces: {
                 type: Array
+            },
+            actualCheckedLgus: {
+                type: Array
             }
         },
         methods: {
@@ -82,15 +87,21 @@
             showLgus(province, stat){
                 let self = this;
                 self.$emit('fetchcheckedbyprovince', {
-                    stat_id: stat.id,
+                    program_stat_id: stat.id,
+                    program_id: stat.program_id,
                     province_id: province.id
                 });
                 self.$emit('setcurrentreport', stat);
                 self.$emit('newprovince', province);
                 $('#modal-lgus').modal('show');
             },
-            getSuTotalSubmitted(){
-                return 0;
+            getSuTotalSubmitted(province, stat){
+                let self = this;
+                let headers = {
+                    province_id: province.id,
+                    program_stat_id: stat.id
+                };
+                return _.filter(self.actualCheckedLgus, headers).length;
             },
             deleteProgram(stat){
                 let self = this;

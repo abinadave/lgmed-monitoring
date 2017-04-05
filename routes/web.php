@@ -36,4 +36,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::delete('program/stat/{id}', 'ProgramStatsController@delete');
     Route::get('report/files/view/{prog_id}/{stat_id}/{source}', 'ReportFileController@viewFile');
     Route::post('checked/lgu', 'CheckedLguController@findAndinsert');
+    Route::post('fetch/checked/lgu', 'CheckedLguController@fetchByHeaders');
+    Route::post('fetch/checked/lgu/by/program', 'CheckedLguController@fetchCheckedByProgram');
+    Route::post('checkall/checked/lgu', 'CheckedLguController@checkOrUncheck');
 });

@@ -9,12 +9,7 @@
                         <button @click="createReport" class="btn btn-xs btn-success pull-right" style="margin-right: 10px">Add report to {{ program.program_name }}</button>
                     </div>
                     <div class="panel-body">
-                    <div v-if="!program_stats.length">
-                        Fetching please wait.... 
-                        <i class="fa fa-spinner fa-2x fa-pulse fa-fw"></i>
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                    <div v-else>
+                    <div>
                         <report-list
                         @fetchcheckedbyprovince="fetchCheckedLguByProvince"
                         @newprovince="updateCurrentProvince"
@@ -25,10 +20,12 @@
                         :report-files="report_files"
                         :provinces="provinces"
                         :actual-checked-lgus="actual_checked_lgus"
+                        :no-report="noReport"
                         ></report-list>
                     </div>
                     <div>
-                        <!-- <table class="table table-bordered table-condensed" style="font-size: 10px; display: none">
+                        <!-- 
+                        <table class="table table-bordered table-condensed" style="font-size: 10px; display: none">
                               <tr>
                                   <th>PROGRAM_ID</th>
                                   <th>PROGRAM_STAT_ID</th>
@@ -43,7 +40,8 @@
                                   <td>{{ actual_model.province_id }}</td>
                                   <td>{{ actual_model.id }}</td>
                               </tr>
-                        </table> -->
+                        </table> 
+                        -->
                     </div>
                     </div>
                 </div>
@@ -71,20 +69,22 @@
         :report-files="report_files"
         ></modal-report-files>
 
-        <modal-checked-lgus 
+        <modal-checked-lgus
         @setcurrentreport="setCurrentReport"
         @addcheckedlgu="createCheckedLgu"
         @removecheckedlgu="deletedCheckedLgu"
         @checkalllgus="checkAllAddLgu"
         @unchecklgus="uncheckAllLgu"
-        @checkedlguremove="deleteCheckedLgu"
+        @checkedlguremove="deleteCheckedLgu" 
+        @refetchmymodels="fetchMyReports"
         :filtered-lgus="modalFilteredLgus"
         :province="currentProvince"
         :stat="currentStat"
         :program="program"
         :provinces="provinces"
         :checked-lgus="checked_lgus"
-        :lgus="lgus"></modal-checked-lgus>
+        :lgus="lgus">
+        </modal-checked-lgus>  
     </div>
 </template>
 
@@ -94,6 +94,7 @@
     import CompModalSubmit  from './report/modal_submit_report_now.vue'
     import CompReportFiles  from './report/modal_report_files.vue'
     import CompModalLgus    from './modal_checked_lgus.vue'
+    import alertify from 'alertify.js'
     export default {
         mounted() {
             this.fetch();
@@ -123,7 +124,8 @@
                     name: ''
                 },
                 /* current program id of the panel */
-                currentProgramId: 0
+                currentProgramId: 0,
+                noReport: false
             }
         },
         props: {
@@ -135,6 +137,7 @@
             deleteCheckedLgu(models){
                 let self = this;
                 let model = {};
+                console.log(models);
                 let foundIndexes = [], foundIndex = 0;
                 for (var i = models.length - 1; i >= 0; i--) {
                     model = models[i];
@@ -153,8 +156,12 @@
                 deletedCheckedLgu.forEach(function(model){
                     rs = _.filter(self.actual_checked_lgus, { id: model.id  });
                     if (rs.length) {
-                        index = self.actual_checked_lgus.findIndex(actual => actual.id === model.id);
-                        indexes.push(index);
+                        // index = self.actual_checked_lgus.findIndex(actual => actual.id === model.id);
+                        // indexes.push(index);
+                        index = _.findIndex(self.actual_checked_lgus, {
+                            id: Number(model.id)
+                        });
+                        indexes.push(index)
                     }
                 });
                 indexes.forEach(function(i){
@@ -244,6 +251,8 @@
                     if (resp.status === 200) {
                         let json = resp.body;
                         self.programs = json;
+                        // alert(json.length)
+                        // console.log(json);
                     }
                 }, (resp) => {
                     if (resp.status === 422) {
@@ -306,6 +315,10 @@
                         for (var i = json.reports.length - 1; i >= 0; i--) {
                             self.program_stats.push(json.reports[i]);
                         }
+                        if(!json.reports.length){
+                            alertify.alert('please create atlease one program');
+                            self.noReport = true;
+                        }
                         if (!json.reports.length) {
                             self.noReportWasFound = true;
                         }else {
@@ -317,13 +330,8 @@
                       console.log(resp);
                     }
                 });
-            }
-        },
-        watch: {
-            '$route.params.id': function(newVal){
-                // console.log(newVal);
             },
-            'currentProgramId': function(programId){
+            fetchMyReports(programId){
                 let self = this;
                 self.$http.post('/fetch_checked_lgu_by_program', {
                     program_id: programId
@@ -337,6 +345,15 @@
                       console.log(resp)
                     }
                 });
+            }
+        },
+        watch: {
+            '$route.params.id': function(newVal){
+                // console.log(newVal);
+            },
+            'currentProgramId': function(programId){
+                let self = this;
+                self.fetchMyReports(programId);
             },
             'actual_checked_lgus': function(newVal){
                 let self = this;

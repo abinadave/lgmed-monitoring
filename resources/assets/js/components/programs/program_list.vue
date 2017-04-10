@@ -12,17 +12,16 @@
         <table style="padding: 20px" class="table table-hover table-striped">
             <thead>
                 <tr style="cursor: pointer">
-                    <th @click="sortBy('program_name')">Program Names</th>
-                    <th @click="sortBy('program_manager')">Program Managers</th>
+                    <th @click="sortBy('program_name')">Program Name</th>
+                    <th @click="sortBy('program_manager')">Program Manager</th>
                     <th>Report</th>
-                    <th style="text-align: center">Completed Report</th>
-                    <th style="text-align: center">Pending Report</th>
-                    <th style="text-align: center">Total Report</th>
-                    <th v-show="user.usertype === 'program-manager'">edit report</th>
+                    <th>Submitted Lgu</th>
+                    <th v-show="user.usertype === 'program-manager'">Edit</th>
+                    <th v-show="user.usertype === 'program-manager'">Delete</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="program in filterPrograms">
+                <tr v-for="(program, index) in filterPrograms">
                     <td>
                         <router-link :to="{ name: 'program-reports', params: { id: program.id }}">
                             {{ program.program_name.toUpperCase() }}
@@ -30,11 +29,12 @@
                     </td>
                     <td>{{ getName(program).toUpperCase() }}</td>
                     <th>{{ getReports(program) }}</th>
-                    <td style="text-align: center">{{ getProgramsCompleted(program) }}</td>
-                    <td style="text-align: center">{{ getProgramsInComplete(program) }}</td>
-                    <td style="text-align: center">{{ getTotalReports(program) }}</td>
+                    <th>{{ getTotalLguSubmitted(program) }}</th>
                     <td v-show="user.usertype === 'program-manager'">
                         <i @click="updateReport(program)" style="cursor: pointer" class="fa fa-pencil"></i>
+                    </td>
+                    <td v-show="user.usertype === 'program-manager'">
+                        <i @click="removeREport(program, index)" style="cursor: pointer" class="fa fa-remove"></i>
                     </td>
                 </tr>
             </tbody>
@@ -43,6 +43,7 @@
 </template>
 
 <script>
+    import alertify from 'alertify.js'
     export default {
         mounted() {
 
@@ -62,6 +63,9 @@
             },
             submittedDates: {
                 type: Array
+            },
+            checkedLgus: {
+                type: Array
             }
         },
         data(){
@@ -71,6 +75,43 @@
             }
         },
         methods: {
+            getTotalLguSubmitted(program){
+                let self = this;
+                return _.filter(self.checkedLgus, {
+                    program_id: program.id
+                }).length;
+                // console.log(rs);
+            },
+            removeREport(program, index){
+                let self = this;
+                let rsProgramStats = _.filter(self.programStats, {
+                    program_id: program.id
+                });
+                if (!rsProgramStats) {
+                    alertify.confirm("Are you sure you want to delete: (" + program.program_name.toUpperCase() + ') Program ?', function () {
+                        // user clicked "ok"
+                        let resource = self.$resource('program{/id}');
+                        resource.delete({
+                            id: program.id
+                        }).then((resp) => {
+                            if (resp.status === 200) {
+                                let json = resp.body;
+                                if (json.rsProgram) {
+                                    self.programs.splice(index, 1);
+                                }
+                            }
+                        }, (resp) => {
+                            console.log(resp);
+                        })
+                    }, function() {
+                        // user clicked "cancel"
+                        console.log('ok');
+                    });
+                }else {
+                    alertify.alert("(" + program.program_name.toUpperCase() + ') Cant be deleted, because it has existing reports.');
+                }
+                
+            },
             sortBy(attr){
                 let self = this;
                 ++self.clickSort;

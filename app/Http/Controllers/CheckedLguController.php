@@ -9,6 +9,10 @@ use App\CheckedLgu as CheckedLgu;
 
 class CheckedLguController extends Controller
 {
+    public function fetchAll(){
+        $resp = CheckedLgu::all();
+        return response()->json($resp);
+    }
     public function deleteExisting(Request $request){
         echo "Hit in controller";
     }

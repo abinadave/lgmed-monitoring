@@ -16,7 +16,8 @@
                          :user="user" 
                          :programs="programs" 
                          :submitted-dates="submitted_dates"
-                         :users="users"></list-of-programs>
+                         :users="users"
+                         :checked-lgus="checked_lgus"></list-of-programs>
                     </div>
                 </div>
             </div>
@@ -35,6 +36,7 @@
             self.fetchPrograms();
             self.fetchProgramStats();
             self.fetchSubmittedDates();
+            self.fetchCheckedLgu();
         },
         props: {
             user: {
@@ -44,12 +46,27 @@
         data(){
             return {
                 users: [], programs: [],
+                checked_lgus: [],
                 program_stats: [],
                 submitted_dates: [],
                 imgUrl: '/img/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png'
             }
         },
         methods: {
+            fetchCheckedLgu(){
+                let self = this;
+                self.$http.get('/checked_lgu_fetch_all').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        console.info('checked lgu count: ' + json.length);
+                        self.checked_lgus = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             reSortPrograms(respPrograms){
                 let self = this;
                 self.programs = respPrograms;

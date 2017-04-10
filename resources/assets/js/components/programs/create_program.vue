@@ -11,7 +11,7 @@
                    <form>
                         <div style="width: 250px" v-bind:class="{'has-error': error.program_name }">
                            <label class="control-label">Program Name</label>
-                           <input v-model="form.program_name" type="text" class="form-control" >
+                           <input @keyup.enter="createProgram" v-model="form.program_name" type="text" class="form-control" >
                         </div>
                         <div style="width: 250px" v-bind:class="{'has-error': error.program_manager }">
                            <label class="control-label">Program Manager</label>

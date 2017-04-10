@@ -5,9 +5,23 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Program as Program;
+use App\ProgramStat as ProgramStat; 
 
 class ProgramController extends Controller
 {
+    public function delete($id){
+        $count = Program::where('id', $id)->count();
+        if ($count) {
+            $program = Program::findOrFail($id);
+            $rsProgram = $program->delete();
+            if ($rsProgram) {
+                return response()->json([
+                    'rsProgram' => $rsProgram,
+                    'rsProgramStat' => ProgramStat::where('program_id', $id)->delete()
+                ]);
+            }
+        }
+    }
     public function sortBy($attr, $type){
         $data = Program::orderBy($attr, $type)->get();
         return response()->json($data);

@@ -5,44 +5,23 @@
                <tr>
                    <th>Reporting Freq.</th>
                    <th>Deadline</th>
-                   <!-- 
-                   <th>Date submitted</th>
-                   <th>files</th>
-                   <th width="1">Option</th>
-                   <th>Report File</th> 
-                    -->
-                    <th v-for="province in provinces">{{province.name}}</th>
+                   <th v-for="province in provinces">{{province.name}}</th>
                </tr>
            </thead>
            <tbody>
                <tr v-for="stat in programStats">
                    <td>{{ stat.reporting_freq }}</td>
-                   
                    <td>{{ formatDate(stat.submission_date) }} &nbsp;&nbsp;( {{ fromNOw(stat.submission_date) }} )</td>
-                   <!--  <td>
-                      <span v-if="checkIfSubmitted(stat) === 1">
-                          {{ getSubmittedDate(stat) }} 
-                      </span>
-                      <span v-else>
-                          <a style="cursor: pointer" @click="confirmSubmission(stat)">mark as submitted</a>
-                      </span>
-                   </td>
-                   <td><i style="cursor: pointer" @click="uploadReportFiles(stat)" class="fa fa-2x fa-folder" aria-hidden="true"></i></td>
-                   <td>
-                       <span v-if="checkIfSubmitted(stat) !== 1">
-                           <i @click="deleteProgram(stat)" style="cursor: pointer" class="fa fa-remove"></i>
-                       </span>
-                   </td>
-                   <td>{{ getTotalFiles(stat) }}</td>
-                    -->
-                    <td class="text-center" v-for="province in provinces">
+                   <td class="text-center" v-for="province in provinces">
                        <a @click="showLgus(province, stat)" style="cursor: pointer; font-weight: bolder;">
                           {{ getSuTotalSubmitted(province, stat) }}
                        </a>
-                    </td>
+                   </td>
                </tr>
            </tbody>
+             
        </table>
+        
     </div>
 </template>
 
@@ -54,6 +33,9 @@
             
         },
         props: {
+            noReport: {
+                type: false
+            },
             programStats: {
                 type: Array
             },

@@ -30610,13 +30610,19 @@ module.exports = function spread(callback) {
         },
         evaluateResult: function evaluateResult(json) {
             var self = this;
+            // self.$emit('fetchmyreports');
             if (json.saved.length) {
                 var models = json.saved;
-                self.$emit('checkalllgus', models);
+                // self.$emit('checkalllgus', models);
+                var first = _.first(json.saved);
+                self.$emit('refetchmymodels', first.program_id);
+                console.log(first);
             } else if (json.deleted.length) {
-                // alert(json.deleted)
                 var _models = json.deleted;
-                self.$emit('unchecklgus', _models);
+                // self.$emit('unchecklgus', models);
+                var _first = _.first(json.deleted);
+                self.$emit('refetchmymodels', _first.program_id);
+                console.log(_first);
             }
         },
         deleteExistingCheckedLgu: function deleteExistingCheckedLgu(models) {
@@ -30636,13 +30642,14 @@ module.exports = function spread(callback) {
         },
         checkOrUncheck: function checkOrUncheck(type) {
             var self = this;
+            // alert(1);
             var cities = self.getCurrentLgus(self.province.id);
             if (self.checkedLgus.length > 0 && cities.length !== self.checkedLgus.length) {
                 if (type === 'check-all') {
                     var models = self.checkedLgus;
                     self.deleteExistingCheckedLgu(models);
                 } else {
-                    self.$http.post('remove/checked/lgu', {
+                    self.$http.post('remove_checked_lgu', {
                         checked_lgu: self.checkedLgus
                     }).then(function (resp) {
                         if (resp.status === 200) {
@@ -30660,7 +30667,8 @@ module.exports = function spread(callback) {
         },
         SaveOrDelete: function SaveOrDelete(type, cities) {
             var self = this;
-            self.$http.post('/checkall/checked/lgu', {
+            // alert(type);
+            self.$http.post('/checkall_checked_lgu', {
                 type: type,
                 province_id: self.province.id,
                 program_id: self.stat.program_id,
@@ -30688,6 +30696,8 @@ module.exports = function spread(callback) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_alertify_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_alertify_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_alertify_js__);
 //
 //
 //
@@ -30732,6 +30742,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     mounted: function mounted() {},
@@ -30751,6 +30762,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         submittedDates: {
             type: Array
+        },
+        checkedLgus: {
+            type: Array
         }
     },
     data: function data() {
@@ -30761,6 +30775,42 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
 
     methods: {
+        getTotalLguSubmitted: function getTotalLguSubmitted(program) {
+            var self = this;
+            return _.filter(self.checkedLgus, {
+                program_id: program.id
+            }).length;
+            // console.log(rs);
+        },
+        removeREport: function removeREport(program, index) {
+            var self = this;
+            var rsProgramStats = _.filter(self.programStats, {
+                program_id: program.id
+            });
+            if (!rsProgramStats) {
+                __WEBPACK_IMPORTED_MODULE_0_alertify_js___default.a.confirm("Are you sure you want to delete: (" + program.program_name.toUpperCase() + ') Program ?', function () {
+                    // user clicked "ok"
+                    var resource = self.$resource('program{/id}');
+                    resource.delete({
+                        id: program.id
+                    }).then(function (resp) {
+                        if (resp.status === 200) {
+                            var json = resp.body;
+                            if (json.rsProgram) {
+                                self.programs.splice(index, 1);
+                            }
+                        }
+                    }, function (resp) {
+                        console.log(resp);
+                    });
+                }, function () {
+                    // user clicked "cancel"
+                    console.log('ok');
+                });
+            } else {
+                __WEBPACK_IMPORTED_MODULE_0_alertify_js___default.a.alert("(" + program.program_name.toUpperCase() + ') Cant be deleted, because it has existing reports.');
+            }
+        },
         sortBy: function sortBy(attr) {
             var self = this;
             ++self.clickSort;
@@ -30864,6 +30914,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__report_modal_report_files_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__report_modal_report_files_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue__ = __webpack_require__(186);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__modal_checked_lgus_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_alertify_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_alertify_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_alertify_js__);
 //
 //
 //
@@ -30954,6 +31006,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+
 
 
 
@@ -30989,7 +31042,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 name: ''
             },
             /* current program id of the panel */
-            currentProgramId: 0
+            currentProgramId: 0,
+            noReport: false
         };
     },
 
@@ -31002,6 +31056,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         deleteCheckedLgu: function deleteCheckedLgu(models) {
             var self = this;
             var model = {};
+            console.log(models);
             var foundIndexes = [],
                 foundIndex = 0;
             for (var i = models.length - 1; i >= 0; i--) {
@@ -31025,8 +31080,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             deletedCheckedLgu.forEach(function (model) {
                 rs = _.filter(self.actual_checked_lgus, { id: model.id });
                 if (rs.length) {
-                    index = self.actual_checked_lgus.findIndex(function (actual) {
-                        return actual.id === model.id;
+                    // index = self.actual_checked_lgus.findIndex(actual => actual.id === model.id);
+                    // indexes.push(index);
+                    index = _.findIndex(self.actual_checked_lgus, {
+                        id: Number(model.id)
                     });
                     indexes.push(index);
                 }
@@ -31115,6 +31172,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 if (resp.status === 200) {
                     var json = resp.body;
                     self.programs = json;
+                    // alert(json.length)
+                    // console.log(json);
                 }
             }, function (resp) {
                 if (resp.status === 422) {
@@ -31178,10 +31237,29 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                         self.program_stats.push(json.reports[i]);
                     }
                     if (!json.reports.length) {
+                        __WEBPACK_IMPORTED_MODULE_5_alertify_js___default.a.alert('please create atlease one program');
+                        self.noReport = true;
+                    }
+                    if (!json.reports.length) {
                         self.noReportWasFound = true;
                     } else {
                         self.noReportWasFound = false;
                     }
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
+        fetchMyReports: function fetchMyReports(programId) {
+            var self = this;
+            self.$http.post('/fetch_checked_lgu_by_program', {
+                program_id: programId
+            }).then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    self.actual_checked_lgus = json;
                 }
             }, function (resp) {
                 if (resp.status === 422) {
@@ -31196,18 +31274,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         'currentProgramId': function currentProgramId(programId) {
             var self = this;
-            self.$http.post('/fetch_checked_lgu_by_program', {
-                program_id: programId
-            }).then(function (resp) {
-                if (resp.status === 200) {
-                    var json = resp.body;
-                    self.actual_checked_lgus = json;
-                }
-            }, function (resp) {
-                if (resp.status === 422) {
-                    console.log(resp);
-                }
-            });
+            self.fetchMyReports(programId);
         },
         'actual_checked_lgus': function actual_checked_lgus(newVal) {
             var self = this;
@@ -31264,6 +31331,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
 
 
 
@@ -31275,6 +31343,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         self.fetchPrograms();
         self.fetchProgramStats();
         self.fetchSubmittedDates();
+        self.fetchCheckedLgu();
     },
 
     props: {
@@ -31285,6 +31354,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     data: function data() {
         return {
             users: [], programs: [],
+            checked_lgus: [],
             program_stats: [],
             submitted_dates: [],
             imgUrl: '/img/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png'
@@ -31292,6 +31362,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
 
     methods: {
+        fetchCheckedLgu: function fetchCheckedLgu() {
+            var self = this;
+            self.$http.get('/checked_lgu_fetch_all').then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    console.info('checked lgu count: ' + json.length);
+                    self.checked_lgus = json;
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
         reSortPrograms: function reSortPrograms(respPrograms) {
             var self = this;
             self.programs = respPrograms;
@@ -31932,27 +32016,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 
 
@@ -31960,6 +32023,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     mounted: function mounted() {},
 
     props: {
+        noReport: {
+            type: false
+        },
         programStats: {
             type: Array
         },
@@ -52694,7 +52760,8 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "user": _vm.user,
       "programs": _vm.programs,
       "submitted-dates": _vm.submitted_dates,
-      "users": _vm.users
+      "users": _vm.users,
+      "checked-lgus": _vm.checked_lgus
     },
     on: {
       "sortresponse": _vm.reSortPrograms
@@ -53641,6 +53708,10 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "value": (_vm.form.program_name)
     },
     on: {
+      "keyup": function($event) {
+        if (!('button' in $event) && _vm._k($event.keyCode, "enter", 13)) { return null; }
+        _vm.createProgram($event)
+      },
       "input": function($event) {
         if ($event.target.composing) { return; }
         _vm.form.program_name = $event.target.value
@@ -53760,32 +53831,27 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         _vm.sortBy('program_name')
       }
     }
-  }, [_vm._v("Program Names")]), _vm._v(" "), _c('th', {
+  }, [_vm._v("Program Name")]), _vm._v(" "), _c('th', {
     on: {
       "click": function($event) {
         _vm.sortBy('program_manager')
       }
     }
-  }, [_vm._v("Program Managers")]), _vm._v(" "), _c('th', [_vm._v("Report")]), _vm._v(" "), _c('th', {
-    staticStyle: {
-      "text-align": "center"
-    }
-  }, [_vm._v("Completed Report")]), _vm._v(" "), _c('th', {
-    staticStyle: {
-      "text-align": "center"
-    }
-  }, [_vm._v("Pending Report")]), _vm._v(" "), _c('th', {
-    staticStyle: {
-      "text-align": "center"
-    }
-  }, [_vm._v("Total Report")]), _vm._v(" "), _c('th', {
+  }, [_vm._v("Program Manager")]), _vm._v(" "), _c('th', [_vm._v("Report")]), _vm._v(" "), _c('th', [_vm._v("Submitted Lgu")]), _vm._v(" "), _c('th', {
     directives: [{
       name: "show",
       rawName: "v-show",
       value: (_vm.user.usertype === 'program-manager'),
       expression: "user.usertype === 'program-manager'"
     }]
-  }, [_vm._v("edit report")])])]), _vm._v(" "), _c('tbody', _vm._l((_vm.filterPrograms), function(program) {
+  }, [_vm._v("Edit")]), _vm._v(" "), _c('th', {
+    directives: [{
+      name: "show",
+      rawName: "v-show",
+      value: (_vm.user.usertype === 'program-manager'),
+      expression: "user.usertype === 'program-manager'"
+    }]
+  }, [_vm._v("Delete")])])]), _vm._v(" "), _c('tbody', _vm._l((_vm.filterPrograms), function(program, index) {
     return _c('tr', [_c('td', [_c('router-link', {
       attrs: {
         "to": {
@@ -53795,19 +53861,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
           }
         }
       }
-    }, [_vm._v("\n                        " + _vm._s(program.program_name.toUpperCase()) + "\n                    ")])], 1), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.getName(program).toUpperCase()))]), _vm._v(" "), _c('th', [_vm._v(_vm._s(_vm.getReports(program)))]), _vm._v(" "), _c('td', {
-      staticStyle: {
-        "text-align": "center"
-      }
-    }, [_vm._v(_vm._s(_vm.getProgramsCompleted(program)))]), _vm._v(" "), _c('td', {
-      staticStyle: {
-        "text-align": "center"
-      }
-    }, [_vm._v(_vm._s(_vm.getProgramsInComplete(program)))]), _vm._v(" "), _c('td', {
-      staticStyle: {
-        "text-align": "center"
-      }
-    }, [_vm._v(_vm._s(_vm.getTotalReports(program)))]), _vm._v(" "), _c('td', {
+    }, [_vm._v("\n                        " + _vm._s(program.program_name.toUpperCase()) + "\n                    ")])], 1), _vm._v(" "), _c('td', [_vm._v(_vm._s(_vm.getName(program).toUpperCase()))]), _vm._v(" "), _c('th', [_vm._v(_vm._s(_vm.getReports(program)))]), _vm._v(" "), _c('th', [_vm._v(_vm._s(_vm.getTotalLguSubmitted(program)))]), _vm._v(" "), _c('td', {
       directives: [{
         name: "show",
         rawName: "v-show",
@@ -53822,6 +53876,23 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       on: {
         "click": function($event) {
           _vm.updateReport(program)
+        }
+      }
+    })]), _vm._v(" "), _c('td', {
+      directives: [{
+        name: "show",
+        rawName: "v-show",
+        value: (_vm.user.usertype === 'program-manager'),
+        expression: "user.usertype === 'program-manager'"
+      }]
+    }, [_c('i', {
+      staticClass: "fa fa-remove",
+      staticStyle: {
+        "cursor": "pointer"
+      },
+      on: {
+        "click": function($event) {
+          _vm.removeREport(program, index)
         }
       }
     })])])
@@ -53881,18 +53952,15 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_vm._v("Add report to " + _vm._s(_vm.program.program_name))])]), _vm._v(" "), _c('div', {
     staticClass: "panel-body"
-  }, [(!_vm.program_stats.length) ? _c('div', [_vm._v("\n                    Fetching please wait.... \n                    "), _c('i', {
-    staticClass: "fa fa-spinner fa-2x fa-pulse fa-fw"
-  }), _vm._v(" "), _c('span', {
-    staticClass: "sr-only"
-  }, [_vm._v("Loading...")])]) : _c('div', [_c('report-list', {
+  }, [_c('div', [_c('report-list', {
     attrs: {
       "program": _vm.program,
       "program-stats": _vm.program_stats,
       "submitted-dates": _vm.submitted_dates,
       "report-files": _vm.report_files,
       "provinces": _vm.provinces,
-      "actual-checked-lgus": _vm.actual_checked_lgus
+      "actual-checked-lgus": _vm.actual_checked_lgus,
+      "no-report": _vm.noReport
     },
     on: {
       "fetchcheckedbyprovince": _vm.fetchCheckedLguByProvince,
@@ -53940,7 +54008,8 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "removecheckedlgu": _vm.deletedCheckedLgu,
       "checkalllgus": _vm.checkAllAddLgu,
       "unchecklgus": _vm.uncheckAllLgu,
-      "checkedlguremove": _vm.deleteCheckedLgu
+      "checkedlguremove": _vm.deleteCheckedLgu,
+      "refetchmymodels": _vm.fetchMyReports
     }
   })], 1)
 },staticRenderFns: []}

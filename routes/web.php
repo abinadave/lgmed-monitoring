@@ -38,7 +38,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('checked/lgu', 'CheckedLguController@findAndinsert');
     Route::post('fetch/checked/lgu', 'CheckedLguController@fetchByHeaders');
     Route::post('fetch_checked_lgu_by_program', 'CheckedLguController@fetchCheckedByProgram');
-    Route::post('checkall/checked/lgu', 'CheckedLguController@checkOrUncheck');
-    Route::post('remove/checked/lgu', 'CheckedLguController@remove');
+    Route::post('checkall_checked_lgu', 'CheckedLguController@checkOrUncheck');
+    Route::post('remove_checked_lgu', 'CheckedLguController@remove');
     Route::post('delete_existing_checked_lgu', 'CheckedLguController@deleteExisting');
+    Route::delete('program/{id}', 'ProgramController@delete');
+    Route::get('checked_lgu_fetch_all', 'CheckedLguController@fetchAll');
+
+    Route::get('update_brgys', 'BrgyController@updateBrgys');
 });

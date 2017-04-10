@@ -143,13 +143,19 @@
             },
             evaluateResult(json){
                 let self = this;
+                // self.$emit('fetchmyreports');
                 if (json.saved.length) {
                     let models = json.saved;
-                    self.$emit('checkalllgus', models);
+                    // self.$emit('checkalllgus', models);
+                    let first = _.first(json.saved);
+                    self.$emit('refetchmymodels', first.program_id);
+                    console.log(first)
                 }else if(json.deleted.length) {
-                    // alert(json.deleted)
                     let models = json.deleted;
-                    self.$emit('unchecklgus', models);
+                    // self.$emit('unchecklgus', models);
+                    let first = _.first(json.deleted);
+                    self.$emit('refetchmymodels', first.program_id);
+                    console.log(first)
                 }
             },
             deleteExistingCheckedLgu(models){
@@ -169,13 +175,14 @@
             },
             checkOrUncheck(type){
                 let self = this;
+                // alert(1);
                 let cities = self.getCurrentLgus(self.province.id);
                 if (self.checkedLgus.length > 0 && cities.length !== self.checkedLgus.length) {
                     if (type === 'check-all') {
                         let models = self.checkedLgus;
                         self.deleteExistingCheckedLgu(models);
                     }else {
-                        self.$http.post('remove/checked/lgu', {
+                        self.$http.post('remove_checked_lgu', {
                             checked_lgu: self.checkedLgus
                         }).then((resp) => {
                             if (resp.status === 200) {
@@ -193,7 +200,8 @@
             },
             SaveOrDelete(type, cities){
                 let self = this;
-                self.$http.post('/checkall/checked/lgu', {
+                // alert(type);
+                self.$http.post('/checkall_checked_lgu', {
                     type: type,
                     province_id: self.province.id,
                     program_id: self.stat.program_id,

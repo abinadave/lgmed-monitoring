@@ -51,3 +51,11 @@ window.router = new VueRouter({
 const app = new Vue({
   	router
 }).$mount('#app');
+
+import 'pubnub'
+
+window.pubnub = new PubNub({
+    subscribeKey: "mySubscribeKey",
+    publishKey: "myPublishKey",
+    ssl: true
+})

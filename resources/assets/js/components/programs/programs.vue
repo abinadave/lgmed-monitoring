@@ -1,26 +1,26 @@
 <template>
     <div>
-            <div class="col-md-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <img style="width: 50px; height: 50px" :src="imgUrl">
-                        <h2 style="display: inline; padding: 15px">LGMED Monitoring Dashboard</h2>
-                    </div>
-                    <div class="panel-body">
-                        <button @click="createProgram" class="btn btn-sm btn-primary pull-right">
-                            Add program
-                        <i class="fa fa-tasks" aria-hidden="true"></i></button>
-                        <list-of-programs
-                         @sortresponse="reSortPrograms"
-                         :program-stats="program_stats"
-                         :user="user" 
-                         :programs="programs" 
-                         :submitted-dates="submitted_dates"
-                         :users="users"
-                         :checked-lgus="checked_lgus"></list-of-programs>
-                    </div>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <img style="width: 50px; height: 50px" :src="imgUrl">
+                    <h2 style="display: inline; padding: 15px">LGMED Monitoring Dashboard</h2>
+                </div>
+                <div class="panel-body">
+                    <button @click="createProgram" class="btn btn-sm btn-primary pull-right">
+                        Add program
+                    <i class="fa fa-tasks" aria-hidden="true"></i></button>
+                    <list-of-programs
+                     @sortresponse="reSortPrograms"
+                     :program-stats="program_stats"
+                     :user="user" 
+                     :programs="programs" 
+                     :submitted-dates="submitted_dates"
+                     :users="users"
+                     :checked-lgus="checked_lgus"></list-of-programs>
                 </div>
             </div>
+        </div>
         <modal-create-program :user="user" @newprogram="newChildProgram" :users="users"></modal-create-program>
     </div>
 </template>

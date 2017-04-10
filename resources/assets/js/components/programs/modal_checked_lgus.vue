@@ -160,18 +160,42 @@
             },
             deleteExistingCheckedLgu(models){
                 let self = this;
-                self.$http.post('/delete_existing_checked_lgu', {
-                    models: models
-                }).then((resp) => {
-                    if (resp.status === 200) {
-                        let json = resp.body;
-                        console.log(json);
-                    }
-                }, (resp) => {
-                    if (resp.status === 422) {
-                      console.log(resp)
-                    }
-                });
+                let munIds = _.map(models, 'municipality_id');
+                let cities = self.getCurrentLgus(self.province.id);
+                let diffArr = _.difference(_.map(cities, 'id'), munIds);
+                let rs = [];
+                let model = {};
+                if (diffArr.length) {
+                    self.$http.post('create_checked_lgu', {
+                        mud_ids: diffArr,
+                        province_id: self.province.id,
+                        program_id: self.stat.program_id,
+                        program_stat_id: self.stat.id
+                    }).then((resp) => {
+                        if (resp.status === 200) {
+                            let json = resp.body;
+                            json.saved.forEach(function(model){
+                                self.$emit('addcheckedlgu', model);
+                            }); 
+                       }
+                    }, (resp) => {
+                        console.log(resp);
+                    });
+                }else {
+                    alert('No municipality_id was found');
+                }
+                // self.$http.post('/delete_existing_checked_lgu', {
+                //     models: models
+                // }).then((resp) => {
+                //     if (resp.status === 200) {
+                //         let json = resp.body;
+                //         console.log(json);
+                //     }
+                // }, (resp) => {
+                //     if (resp.status === 422) {
+                //       console.log(resp)
+                //     }
+                // });
             },
             checkOrUncheck(type){
                 let self = this;

@@ -85,6 +85,7 @@
         :checked-lgus="checked_lgus"
         :lgus="lgus">
         </modal-checked-lgus>  
+        
     </div>
 </template>
 

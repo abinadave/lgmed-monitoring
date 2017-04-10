@@ -43,6 +43,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('delete_existing_checked_lgu', 'CheckedLguController@deleteExisting');
     Route::delete('program/{id}', 'ProgramController@delete');
     Route::get('checked_lgu_fetch_all', 'CheckedLguController@fetchAll');
-
+    Route::post('create_checked_lgu', 'CheckedLguController@addNewCheckedLgu');
     Route::get('update_brgys', 'BrgyController@updateBrgys');
 });

@@ -15,7 +15,8 @@
                     <th @click="sortBy('program_name')">Program Name</th>
                     <th @click="sortBy('program_manager')">Program Manager</th>
                     <th>Report</th>
-                    <th>Submitted Lgu</th>
+                    <th class="text-center">Submitted Lgu</th>
+                    <th class="text-center">Percentage</th>
                     <th v-show="user.usertype === 'program-manager'">Edit</th>
                     <th v-show="user.usertype === 'program-manager'">Delete</th>
                 </tr>
@@ -29,7 +30,8 @@
                     </td>
                     <td>{{ getName(program).toUpperCase() }}</td>
                     <th>{{ getReports(program) }}</th>
-                    <th>{{ getTotalLguSubmitted(program) }}</th>
+                    <th class="text-center">{{ getTotalLguSubmitted(program) }}</th>
+                    <td style="font-weight: bolder; text-align: center" :class="{ 'text-danger' : (getTotalPercentage(program) <= 20) ? true : false, 'text-primary' : (getTotalPercentage(program) >= 50) ? true : false }"><b>{{ getTotalPercentage(program) }} %</b></td>
                     <td v-show="user.usertype === 'program-manager'">
                         <i @click="updateReport(program)" style="cursor: pointer" class="fa fa-pencil"></i>
                     </td>
@@ -44,6 +46,7 @@
 
 <script>
     import alertify from 'alertify.js'
+    import accounting from 'accounting'
     export default {
         mounted() {
 
@@ -75,6 +78,13 @@
             }
         },
         methods: {
+            getTotalPercentage(program){
+                let self = this;
+                let length = self.getTotalLguSubmitted(program);
+                let total = 146;
+                let calculated = (length / total) * 100;
+                return accounting.formatNumber(calculated, 1, " ");
+            },
             getTotalLguSubmitted(program){
                 let self = this;
                 return _.filter(self.checkedLgus, {

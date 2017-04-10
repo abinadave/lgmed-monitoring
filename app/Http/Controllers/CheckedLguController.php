@@ -9,6 +9,31 @@ use App\CheckedLgu as CheckedLgu;
 
 class CheckedLguController extends Controller
 {
+    public function addNewCheckedLgu(Request $request){
+        // mud_ids: diffArr,
+        // province_id: self.province.id,
+        // program_id: self.stat.program_id,
+        // program_stat_id: self.stat.id
+        $mudIds = $request->input('mud_ids');
+        $program_id = $request->input('program_id');
+        $province_id = $request->input('province_id');
+        $program_stat_id = $request->input('program_stat_id');
+        $saved = array();
+        foreach ($mudIds as $lgu_id) {
+            $checked = new CheckedLgu;
+            $checked->municipality_id = $lgu_id;
+            $checked->program_id = $request->input('program_id');
+            $checked->province_id = $request->input('province_id');
+            $checked->program_stat_id = $request->input('program_stat_id');
+            $checked->user_id = Auth::user()->id;
+            $checked->save();
+            array_push($saved, $checked);
+        }
+        return response()->json([
+            'saved' => $saved
+        ]);
+
+    }
     public function fetchAll(){
         $resp = CheckedLgu::all();
         return response()->json($resp);

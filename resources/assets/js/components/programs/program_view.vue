@@ -14,6 +14,7 @@
                         @fetchcheckedbyprovince="fetchCheckedLguByProvince"
                         @newprovince="updateCurrentProvince"
                         @setcurrentreport="setCurrentReport" 
+                        @deletedstat="removeProgramStat"
                         :program="program"
                         :program-stats="program_stats"
                         :submitted-dates="submitted_dates"
@@ -135,6 +136,10 @@
             }
         },
         methods: {
+            removeProgramStat(index){
+                let self = this;
+                self.program_stats.splice(index, 1);
+            },
             deleteCheckedLgu(models){
                 let self = this;
                 let model = {};

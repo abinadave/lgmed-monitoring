@@ -4,19 +4,21 @@
            <thead>
                <tr>
                    <th>Reporting Freq.</th>
-                   <th>Deadline</th>
-                   <th v-for="province in provinces">{{province.name}}</th>
+                   <!-- <th>Deadline</th> -->
+                   <th v-for="province in provinces" class="text-center">{{province.name}}</th>
+                   <th width="1"></th>
                </tr>
            </thead>
            <tbody>
-               <tr v-for="stat in programStats">
+               <tr v-for="(stat, index) in programStats">
                    <td>{{ stat.reporting_freq }}</td>
-                   <td>{{ formatDate(stat.submission_date) }} &nbsp;&nbsp;( {{ fromNOw(stat.submission_date) }} )</td>
+                   <!-- <td>{{ formatDate(stat.submission_date) }} &nbsp;&nbsp;( {{ fromNOw(stat.submission_date) }} )</td> -->
                    <td class="text-center" v-for="province in provinces">
                        <a @click="showLgus(province, stat)" style="cursor: pointer; font-weight: bolder;">
                           {{ getSuTotalSubmitted(province, stat) }}
                        </a>
                    </td>
+                   <td><a style="cursor: pointer" @click="removeProgramStat(stat, index)"><i class="fa fa-remove text-danger"></i></a></td>
                </tr>
            </tbody>
              
@@ -53,6 +55,28 @@
             }
         },
         methods: {
+            removeProgramStat(stat, index){
+                let self = this;
+                alertify.confirm("Are you sure,you want to remove Report: " + stat.reporting_freq, function () {
+                    // user clicked "ok"
+                    let resource = self.$resource('program_stat{/id}');
+                    resource.delete({
+                        id: stat.id
+                    }).then((resp) => {
+                        if (resp.status === 200) {
+                            let json = resp.body;
+                            if (json.deleted) {
+                                self.$emit('deletedstat', index);
+                                alert('deleted')
+                            }
+                        }
+                    }, (resp) => {
+                        console.log(resp);
+                    })
+                }, function() {
+                    // user clicked "cancel"
+                });
+            },
             getTotalFiles(stat){
                 let self = this;
                 let rs = _.filter(self.reportFiles, {program_stat_id: stat.id});

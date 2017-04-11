@@ -7,6 +7,7 @@ use App\ProgramStat as ProgramStat;
 use App\Program as Program;
 use App\ReportFile as ReportFile;
 use Storage;
+use App\CheckedLgu as CheckedLgu;
 
 class ProgramStatsController extends Controller
 {
@@ -16,6 +17,7 @@ class ProgramStatsController extends Controller
         $rs = $stat->delete();
         if ($rs) {
             $count = ReportFile::where('program_stat_id', $id)->count();
+            $deletedCheckedLgu = CheckedLgu::where('program_stat_id', $id)->delete();
             if ($count > 0) {
                 ReportFile::where('program_stat_id', $id)->delete();
             }
@@ -25,7 +27,8 @@ class ProgramStatsController extends Controller
                 'deleted' => $rs,
                 'file_count' => $count,
                 'dir_deleted' => $dirDeleted,
-                'directory' => $dir
+                'directory' => $dir,
+                'checked_lgu_delete' => $deletedCheckedLgu
             ]);
         }
     }
@@ -40,7 +43,7 @@ class ProgramStatsController extends Controller
     	$stat = new ProgramStat;
     	$stat->program_id = $request->input('program_id');
     	$stat->reporting_freq = $request->input('reporting_freq');
-    	$stat->submission_date = $request->input('submission_date');
+    	// $stat->submission_date = $request->input('submission_date');
     	$stat->save();
     	return response()->json($stat);
     }

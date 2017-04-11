@@ -1,25 +1,29 @@
 <template>
     <div>
         <div style="margin-top: 60px" class="modal fade" id="create-report-program" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-          <div class="modal-dialog" role="document" style="width: 300px">
+          <div class="modal-dialog" role="document" style="width: 400px">
             <div class="modal-content">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel"> {{ program.program_name }} reports</h4>
               </div>
               <div class="modal-body">
-                    <div class="form-group">
-                      <label class="control-label">Submission Date / Deadline</label>
-                      <input v-model="form.submission_date" id="datepicker" type="text" class="form-control input-form" />
-                    </div>
+                    
                     <div class="form-group">
                       <label class="control-label">Report Freq.</label>
                       <select v-model="form.reporting_freq" class="form-control input-form">
+                          <option>Annual</option>
+                          <option>Semestral</option>
+                          <option>Quarterly</option>
                           <option>Monthly</option>
                           <option>Weekly</option>
-                          <option>Quarterly</option>
+                          <option>Daily</option>
                           <option value="others">Others</option>
                       </select>
+                      <!-- <div class="form-group">
+                        <label class="control-label">Submission Date / Deadline</label>
+                        <input v-model="form.submission_date" id="datepicker" type="text" class="form-control input-form" />
+                      </div> -->
                     </div>
                     <div class="form-group" v-show="form.reporting_freq === 'others'">
                       <label class="control-label">Enter Report type</label>
@@ -35,7 +39,7 @@
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button @click="saveReport" type="button" class="btn btn-success" >Add report</button>
+                <button @click="saveReport" type="button" class="btn btn-success" >Submit report</button>
               </div>
             </div>
           </div>

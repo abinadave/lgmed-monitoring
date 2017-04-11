@@ -80,9 +80,7 @@
 
         @yield('content')
     </div>
-
     <!-- Scripts -->
-    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.8.0.js"></script>
-    <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{ asset('js/app.js') }}"></script>  
 </body>
 </html>

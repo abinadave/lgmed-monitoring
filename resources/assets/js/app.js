@@ -11,6 +11,9 @@ require('./bootstrap');
 Vue.use(VueRouter);
 Vue.use(VueResource);
 
+
+
+
 /**
  * Next, we will create a fresh Vue application instance and attach it to
  * the page. Then, you may begin adding components to this application
@@ -52,10 +55,4 @@ const app = new Vue({
   	router
 }).$mount('#app');
 
-import 'pubnub'
 
-window.pubnub = new PubNub({
-    subscribeKey: "mySubscribeKey",
-    publishKey: "myPublishKey",
-    ssl: true
-})

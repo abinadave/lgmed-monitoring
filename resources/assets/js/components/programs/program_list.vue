@@ -97,7 +97,8 @@
                 let rsProgramStats = _.filter(self.programStats, {
                     program_id: program.id
                 });
-                if (!rsProgramStats) {
+                console.log(rsProgramStats)
+                if (!rsProgramStats.length) {
                     alertify.confirm("Are you sure you want to delete: (" + program.program_name.toUpperCase() + ') Program ?', function () {
                         // user clicked "ok"
                         let resource = self.$resource('program{/id}');

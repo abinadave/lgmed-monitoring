@@ -26,7 +26,6 @@
         
     </div>
 </template>
-
 <script>
     import moment from 'moment'
     import alertify from 'alertify.js'

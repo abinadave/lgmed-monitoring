@@ -84,7 +84,9 @@
         :program="program"
         :provinces="provinces"
         :checked-lgus="checked_lgus"
-        :lgus="lgus">
+        :lgus="lgus"
+        :user="user"
+        :brgys="brgys">
         </modal-checked-lgus>  
         
     </div>
@@ -99,22 +101,27 @@
     import alertify from 'alertify.js'
     export default {
         mounted() {
-            this.fetch();
-            this.fetchUsers();
-            this.fetchSubmittedDates();
-            this.fetchPrograms();
-            this.fetchReportFiles();
-            this.fetchLguAndProvince();
+            let self = this;
+            self.fetch();
+            self.fetchUsers();
+            self.fetchSubmittedDates();
+            self.fetchPrograms();
+            self.fetchReportFiles();
+            self.fetchLguAndProvince();
+            setTimeout(function(){
+                self.fetchBrgys();
+            }, 1000);
         },
         data(){
             return {
+                brgys: [],
                 users: [], program_stats: [],
                 programs: [],
                 program: {
                     id: 0,
                     program_name: '',
                     program_manager: ''
-                },    
+                },
                 noReportWasFound: false,
                 currentStat: {},
                 submitted_dates: [], report_files: [],
@@ -136,6 +143,20 @@
             }
         },
         methods: {
+            fetchBrgys(){
+                let self = this;
+                self.$http.get('/brgy').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.brgys = json;
+                        console.log(self.brgys.length)
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                      console.log(resp)
+                    }
+                });
+            },
             removeProgramStat(index){
                 let self = this;
                 self.program_stats.splice(index, 1);

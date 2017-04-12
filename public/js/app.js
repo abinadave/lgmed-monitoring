@@ -30878,6 +30878,20 @@ module.exports = function spread(callback) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function($) {Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__brgy_subview_checked_brgy_vue__ = __webpack_require__(227);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__brgy_subview_checked_brgy_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__brgy_subview_checked_brgy_vue__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -30919,10 +30933,20 @@ module.exports = function spread(callback) {
 //
 //
 
+
+
 /* harmony default export */ __webpack_exports__["default"] = ({
-    mounted: function mounted() {
-        console.log('Component mounted.');
+    components: {
+        'subview-brgy': __WEBPACK_IMPORTED_MODULE_0__brgy_subview_checked_brgy_vue___default.a
     },
+    mounted: function mounted() {
+        var self = this;
+        console.log('Component mounted.');
+        $('#modal-lgus').on('hidden.bs.modal', function (e) {
+            // self.currentBrgys = [];
+        });
+    },
+
 
     props: {
         provinces: {
@@ -30945,16 +30969,29 @@ module.exports = function spread(callback) {
         },
         lgus: {
             type: Array
+        },
+        user: {
+            type: Object
+        },
+        brgys: {
+            type: Array
         }
     },
     data: function data() {
         return {
             whileSavingCheckedLgu: false,
-            checkAll: false
+            checkAll: false,
+            currentBrgys: []
         };
     },
 
     methods: {
+        showBrgys: function showBrgys(lgu) {
+            var self = this;
+            var rs = _.filter(self.brgys, { municipality_id: lgu.id });
+            // console.log(rs);
+            self.currentBrgys = rs;
+        },
         markAllAsCheck: function markAllAsCheck() {
             var self = this;
             // self.checkOrUncheck('check-all')
@@ -31464,6 +31501,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
 
 
 
@@ -31473,15 +31512,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     mounted: function mounted() {
-        this.fetch();
-        this.fetchUsers();
-        this.fetchSubmittedDates();
-        this.fetchPrograms();
-        this.fetchReportFiles();
-        this.fetchLguAndProvince();
+        var self = this;
+        self.fetch();
+        self.fetchUsers();
+        self.fetchSubmittedDates();
+        self.fetchPrograms();
+        self.fetchReportFiles();
+        self.fetchLguAndProvince();
+        setTimeout(function () {
+            self.fetchBrgys();
+        }, 1000);
     },
     data: function data() {
         return {
+            brgys: [],
             users: [], program_stats: [],
             programs: [],
             program: {
@@ -31511,6 +31555,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
     },
     methods: {
+        fetchBrgys: function fetchBrgys() {
+            var self = this;
+            self.$http.get('/brgy').then(function (resp) {
+                if (resp.status === 200) {
+                    var json = resp.body;
+                    self.brgys = json;
+                    console.log(self.brgys.length);
+                }
+            }, function (resp) {
+                if (resp.status === 422) {
+                    console.log(resp);
+                }
+            });
+        },
         removeProgramStat: function removeProgramStat(index) {
             var self = this;
             self.program_stats.splice(index, 1);
@@ -32455,7 +32513,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_moment___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_moment__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_alertify_js__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_alertify_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_alertify_js__);
-//
 //
 //
 //
@@ -53289,6 +53346,9 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     }
   }, [_c('div', {
     staticClass: "modal-dialog",
+    staticStyle: {
+      "width": "60%"
+    },
     attrs: {
       "role": "document"
     }
@@ -53301,7 +53361,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "id": "myModalLabel"
     }
-  }, [_vm._v("\n            " + _vm._s(_vm.province.name.toUpperCase()) + " " + _vm._s(_vm.lgus.length))])]), _vm._v(" "), _c('div', {
+  }, [_vm._v("\n            " + _vm._s(_vm.province.name.toUpperCase()) + " " + _vm._s(_vm.brgys.length))])]), _vm._v(" "), _c('div', {
     staticClass: "modal-body"
   }, [_c('button', {
     staticClass: "btn btn-success btn-xs",
@@ -53327,13 +53387,35 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     attrs: {
       "aria-hidden": "true"
     }
-  })]), _c('br'), _vm._v(" "), _c('table', {
+  })]), _c('br'), _c('br'), _vm._v(" "), _c('div', {
+    staticClass: "col-md-5",
+    staticStyle: {
+      "overflow": "auto",
+      "height": "500px"
+    }
+  }, [_c('table', {
     staticClass: "table table-bordered table-condensed table-striped",
     staticStyle: {
-      "margin-top": "10px"
+      "margin-top": "10p"
     }
-  }, [_vm._m(1), _vm._v(" "), _c('tbody', _vm._l((_vm.filteredLgus), function(lgu) {
-    return _c('tr', [_c('td', [_vm._v(_vm._s(lgu.name))]), _vm._v(" "), _c('td', {
+  }, [_vm._m(1), _vm._v(" "), _c('tbody', [_vm._l((_vm.filteredLgus), function(lgu) {
+    return _c('tr', {
+      directives: [{
+        name: "show",
+        rawName: "v-show",
+        value: (_vm.user.usertype === 'program-manager'),
+        expression: "user.usertype === 'program-manager'"
+      }]
+    }, [_c('td', [_c('a', {
+      staticStyle: {
+        "cursor": "pointer"
+      },
+      on: {
+        "click": function($event) {
+          _vm.showBrgys(lgu)
+        }
+      }
+    }, [_vm._v(_vm._s(lgu.name.toUpperCase()))])]), _vm._v(" "), _c('td', {
       staticClass: "text-center"
     }, [_c('input', {
       attrs: {
@@ -53349,7 +53431,45 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
         }
       }
     })])])
-  }))])]), _vm._v(" "), _vm._m(2)])])])])
+  }), _vm._v(" "), _vm._l((_vm.filteredLgus), function(lgu) {
+    return _c('tr', {
+      directives: [{
+        name: "show",
+        rawName: "v-show",
+        value: (_vm.user.usertype === 'admin'),
+        expression: "user.usertype === 'admin'"
+      }]
+    }, [_c('td', [_c('a', {
+      staticStyle: {
+        "cursor": "pointer"
+      }
+    }, [_vm._v(_vm._s(lgu.name.toUpperCase()))])]), _vm._v(" "), _c('td', {
+      staticClass: "text-center"
+    }, [_c('span', {
+      directives: [{
+        name: "show",
+        rawName: "v-show",
+        value: (_vm.findCheckedLgu(lgu) === true),
+        expression: "findCheckedLgu(lgu) === true"
+      }]
+    }, [_c('i', {
+      staticClass: "fa fa-check",
+      attrs: {
+        "aria-hidden": "true"
+      }
+    })])])])
+  })], 2)])]), _vm._v(" "), _c('div', {
+    staticClass: "col-md-6"
+  }, [_c('subview-brgy', {
+    attrs: {
+      "current-brgys": _vm.currentBrgys
+    }
+  })], 1)]), _vm._v(" "), _c('div', {
+    staticClass: "modal-footer",
+    staticStyle: {
+      "border-color": "transparent"
+    }
+  })])])])])
 },staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _c('button', {
     staticClass: "close",
@@ -53369,16 +53489,6 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "width": "50"
     }
   }, [_vm._v("Submitted")])])])
-},function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('div', {
-    staticClass: "modal-footer"
-  }, [_c('button', {
-    staticClass: "btn btn-default",
-    attrs: {
-      "type": "button",
-      "data-dismiss": "modal"
-    }
-  }, [_vm._v("Close")])])
 }]}
 module.exports.render._withStripped = true
 if (false) {
@@ -54497,7 +54607,9 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
       "program": _vm.program,
       "provinces": _vm.provinces,
       "checked-lgus": _vm.checked_lgus,
-      "lgus": _vm.lgus
+      "lgus": _vm.lgus,
+      "user": _vm.user,
+      "brgys": _vm.brgys
     },
     on: {
       "setcurrentreport": _vm.setCurrentReport,
@@ -67884,6 +67996,137 @@ module.exports = Vue$3;
 __webpack_require__(138);
 module.exports = __webpack_require__(139);
 
+
+/***/ }),
+/* 220 */,
+/* 221 */,
+/* 222 */,
+/* 223 */,
+/* 224 */,
+/* 225 */,
+/* 226 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function($) {Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    mounted: function mounted() {},
+
+    props: {
+        currentBrgys: {
+            type: Array
+        }
+    },
+    methods: {
+        changeCheckbox: function changeCheckbox(brgy, event) {
+            var self = this;
+            console.log(brgy);
+            var isChecked = $(event.target).is(':checked');
+            if (isChecked) {
+                self.$http.post('/checked_brgy').then(function (resp) {
+                    if (resp.status === 200) {
+                        var json = resp.body;
+                        console.log(json);
+                    }
+                }, function (resp) {
+                    if (resp.status === 422) {
+                        console.log(resp);
+                    }
+                });
+            }
+        }
+    }
+});
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1)))
+
+/***/ }),
+/* 227 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Component = __webpack_require__(2)(
+  /* script */
+  __webpack_require__(226),
+  /* template */
+  __webpack_require__(228),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+Component.options.__file = "C:\\xampp\\htdocs\\lgmed-monitoring\\resources\\assets\\js\\components\\brgy\\subview_checked_brgy.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] subview_checked_brgy.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-33fab40e", Component.options)
+  } else {
+    hotAPI.reload("data-v-33fab40e", Component.options)
+  }
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 228 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    staticClass: "panel panel-info"
+  }, [_vm._v("\n    Total Baranggays: " + _vm._s(_vm.currentBrgys.length) + "\n    "), _c('table', {
+    staticClass: "table table-hover table-condensed"
+  }, [_vm._m(0), _vm._v(" "), _c('tbody', _vm._l((_vm.currentBrgys), function(brgy) {
+    return _c('tr', [_c('td', [_vm._v(_vm._s(brgy.name))]), _vm._v(" "), _c('td', [_c('input', {
+      staticClass: "squaredFour",
+      attrs: {
+        "type": "checkbox"
+      },
+      on: {
+        "change": function($event) {
+          _vm.changeCheckbox(brgy, $event)
+        }
+      }
+    })])])
+  }))])])
+},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('thead', [_c('tr', [_c('th', [_vm._v("Brgy")]), _vm._v(" "), _c('th')])])
+}]}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-hot-reload-api").rerender("data-v-33fab40e", module.exports)
+  }
+}
 
 /***/ })
 /******/ ]);

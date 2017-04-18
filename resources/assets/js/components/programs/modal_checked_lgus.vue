@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="modal fade" id="modal-lgus" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-          <div class="modal-dialog" role="document" style="width: 60%">
+          <div class="modal-dialog" role="document" style="width: 50%">
             <div class="modal-content" >
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -11,17 +11,19 @@
               <div class="modal-body">
                   <button @click="checkOrUncheck('check-all')" class="btn btn-success btn-xs">Check all <i class="fa fa-check" aria-hidden="true"></i></button>
                   <button @click="checkOrUncheck('uncheck-all')" class="btn btn-danger btn-xs">Un Check all <i class="fa fa-remove" aria-hidden="true"></i></button><br><br>
-                  <div class="col-md-5" style="overflow: auto; height: 500px">
+                  <div class="col-md-6" style="overflow: auto; height: 500px">
                       <table class="table table-bordered table-condensed table-striped" style="margin-top: 10p">
                           <thead>
                               <tr>
                                   <th>City / Municipality</th>
+                                  <th class="text-center">Brgy</th>
                                   <th width="50">Submitted</th>
                               </tr>
                           </thead>
                           <tbody>
                               <tr v-for="lgu in filteredLgus" v-show="user.usertype === 'program-manager'">
                                   <td><a @click="showBrgys(lgu)" style="cursor: pointer">{{ lgu.name.toUpperCase() }}</a></td>
+                                  <td class="text-center">{{ getSubmittedBrgys(lgu) }}</td>
                                   <td class="text-center">
                                      <input :disabled="whileSavingCheckedLgu" @change="markAsChecked(lgu, $event)" type="checkbox" :checked="findCheckedLgu(lgu) === true">
                                   </td>
@@ -37,8 +39,29 @@
                           </tbody>
                       </table>
                   </div>
-                  <div class="col-md-6">
-                      <subview-brgy :current-brgys="currentBrgys"></subview-brgy>
+
+                  <div class="col-md-5">
+                      <!-- <label >{{ (checkAllCurrentBrgy === false) ? 'check-all' : 'uncheck-all' }}: <input type="checkbox" v-model="checkAllCurrentBrgy"></label>  -->
+                      <div v-show="currentBrgys.length">
+                            <input type="radio" id="one" value="checkall" v-model="checkAllCurrentBrgy">
+                            <label for="one">Check all</label>
+                            <br>
+                            <input type="radio" id="two" value="uncheck-all" v-model="checkAllCurrentBrgy">
+                            <label for="two">Uncheck all</label>
+                            <br>
+                      </div>
+                      <subview-brgy
+                      :check-all-current-brgy="checkAllCurrentBrgy"
+                      :checked-brgys="checkedBrgys" 
+                      :current-municipality="currentMunicipality" 
+                      :current-checked-brgys="currentCheckedBrgys" 
+                      :stat="stat" 
+                      :current-brgys="currentBrgys"
+                      @addcheckedbrgy="addCheckedBrgyChild"
+                      @removecheckedbrgy="removeCheckedBrgyChild"
+                      @refreshcurrentcheckedbrys="refreshCurrentCheckedBrgys"
+                      @removeuncheckedbrgys="removeUncheckedBrgys">
+                      </subview-brgy>
                   </div>
               </div>
               <div class="modal-footer" style="border-color: transparent;">
@@ -60,6 +83,7 @@
         mounted() {
             let self = this;
             console.log('Component mounted.');
+            self.fetchCheckedBrgysAll();
             $('#modal-lgus').on('hidden.bs.modal', function (e) {
                 // self.currentBrgys = [];
             })
@@ -98,15 +122,90 @@
             return {
                 whileSavingCheckedLgu: false,
                 checkAll: false,
-                currentBrgys: []
+                currentBrgys: [],
+                currentCheckedBrgys: [],
+                checkedBrgys: [],
+                currentMunicipality: { name: 'Loading..' },
+                checkAllCurrentBrgy: 'uncheck-all'
             }
         },
         methods: {
+            removeUncheckedBrgys(json){
+                let self = this;
+                console.log(json)
+            },
+            refreshCurrentCheckedBrgys(json){
+                let self = this;
+                self.currentCheckedBrgys = json;
+                let rs = [];
+                json.forEach(function(model){
+                    rs = _.filter(self.checkedBrgys, { 
+                        municipality_id: model.municipality_id,
+                        brgy_id: model.brgy_id
+                    });
+                    if (!rs.length) {
+                        self.checkedBrgys.push(model);
+                    }
+                });
+            },
+            removeCheckedBrgyChild(json){
+                let self = this;
+                let index = _.findIndex(self.checkedBrgys, json);
+                self.checkedBrgys.splice(index, 1);
+            },
+            addCheckedBrgyChild(json){
+                let self = this;
+                self.checkedBrgys.push(json);
+            },
+            getSubmittedBrgys(lgu){
+                let self = this;
+                let headers = {
+                    municipality_id: lgu.id,
+                    program_stat_id: self.stat.id
+                }
+                let rs    = _.filter(self.checkedBrgys, headers);
+                let rsAll = _.filter(self.brgys, {
+                    municipality_id: lgu.id
+                }).length;
+                return (rs.length > 0) ? rs.length + ' / ' + rsAll : '';
+            },
             showBrgys(lgu){
                 let self = this;
+                self.currentMunicipality = lgu;
                 let rs = _.filter(self.brgys, { municipality_id: lgu.id });
-                // console.log(rs);
                 self.currentBrgys = rs;
+                self.fetchCheckedBrgys(lgu);
+            },
+            fetchCheckedBrgysAll(){
+                let self = this;
+                self.$http.get('/fetch_all_checked_brgys').then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.checkedBrgys = json;
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                        console.log(resp);
+                    }
+                });
+            },
+            fetchCheckedBrgys(lgu){
+                let self = this;
+                let headers = {
+                    program_stat_id: self.stat.id,
+                    municipality_id: lgu.id
+                };
+                self.$http.post('/check_brgy_fetch', headers).then((resp) => {
+                    if (resp.status === 200) {
+                        let json = resp.body;
+                        self.currentCheckedBrgys = json;
+                        console.log('found checked_brgys length: ' + self.currentCheckedBrgys.length);
+                    }
+                }, (resp) => {
+                    if (resp.status === 422) {
+                        console.log(resp);
+                    }
+                });
             },
             markAllAsCheck(){
                 let self = this;

@@ -47,7 +47,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('update_brgys', 'BrgyController@updateBrgys');
     Route::delete('program_stat/{id}', 'ProgramStatsController@delete');
     Route::get('brgy', 'BrgyController@fetch');
-    Route::post('checked_brgy', function(){
-        echo "Good";
-    });
+    Route::post('fetch_checked_brgy', 'CheckedBrgyController@insertOrDelete');
+    Route::post('check_brgy_fetch', 'CheckedBrgyController@fetchByLgu');
+    Route::get('fetch_all_checked_brgys', 'CheckedBrgyController@fetchAll');
+    Route::post('check_of_uncheck_all_checked_brgys', 'CheckedBrgyController@checkUncheckAll');
 });

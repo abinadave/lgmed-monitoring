@@ -89,6 +89,9 @@
                     checkedBrgys.forEach(function(model){
                         $('#'+ self.stat.id + '-' + model.brgy_id).prop('checked', true);
                     });
+                    if (checkedBrgys.length === 0) {
+                        $('.table-brgy').find(':checkbox').prop('checked', false);
+                    }
                 }, 500);
             },
             'currentBrgys': function(){
@@ -96,7 +99,7 @@
             },
             'checkAllCurrentBrgy': function(newVal){
                 let self = this;
-                alert(newVal)
+                // alert(newVal)
                 let headers = {
                     program_stat_id: self.stat.id,
                     municipality_id: self.currentMunicipality.id,

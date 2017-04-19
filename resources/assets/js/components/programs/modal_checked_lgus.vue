@@ -132,7 +132,16 @@
         methods: {
             removeUncheckedBrgys(json){
                 let self = this;
-                console.log(json)
+                let rs = [];
+                let foundIndex = 0;
+                json.forEach(function(model){
+                    foundIndex = _.findIndex(self.checkedBrgys, { 
+                        municipality_id: model.municipality_id,
+                        brgy_id: model.brgy_id
+                    });
+                    self.checkedBrgys.splice(foundIndex, 1);
+                });
+                self.currentCheckedBrgys = [];
             },
             refreshCurrentCheckedBrgys(json){
                 let self = this;
@@ -167,7 +176,7 @@
                 let rsAll = _.filter(self.brgys, {
                     municipality_id: lgu.id
                 }).length;
-                return (rs.length > 0) ? rs.length + ' / ' + rsAll : '';
+                return (rs.length > 0) ? rs.length + ' / ' + rsAll : '0 / ' + rsAll;
             },
             showBrgys(lgu){
                 let self = this;
